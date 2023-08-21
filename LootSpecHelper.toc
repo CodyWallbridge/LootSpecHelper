@@ -1,0 +1,14 @@
+## Interface: 100105
+## Title: LootSpecHelper
+## Author: Van
+## Version: 1.0
+##SavedVariablesPerCharacter: targetedItemsRaid, targetedItemsDungeon
+## IconTexture: Interface\AddOns\LootSpecHelper\Media\Icons\lshIcon.jpeg
+
+libs\LibStub\LibStub.lua
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+
+LootSpecHelper.lua
+
+# /run print((select(4, GetBuildInfo())));
