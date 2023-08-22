@@ -11,7 +11,6 @@ lsh_raidIndex = 2;
 
 loot = {};
 lootNames = {};
-trackedItems = {};
 
 raidDifficulties = {
     "Lfr",
@@ -32,15 +31,15 @@ dungeon = nil;
 dungeonIndex = nil;
 dungeonLevel = nil;
 dungeonLevelIndex = nil;
-globalDungeonKey = nil;
 
 addFrameGlobal = nil;
-addFrameDungeonsGlobal = nil;
 globalTab = nil;
 
 globalSpecLootsFrame = nil;
 mostRecentBoss = nil;
 disabled = false;
+
+lsh_journal_opened = false;
 
 keyLevels = {
     "2",
@@ -99,7 +98,7 @@ function tprint (tbl, indent)
     return toprint
 end
 
-function LootSpecHelperEventFrame:GetInstanceInfo()
+function LootSpecHelperEventFrame:CustomGetInstanceInfo()
     local latestTierIndex = EJ_GetNumTiers()
     EJ_SelectTier(latestTierIndex)
 
@@ -164,6 +163,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         local lsh_class_id = select(3,UnitClass('player'))
         local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
         local specTables = {};
+        -- get the targeted items for each spec
         for lsh_specFilter = 1, lsh_numSpecializations, 1 do
             local lsh_currentTable = {};
             lsh_spec_id, lsh_name = GetSpecializationInfo(lsh_specFilter)
@@ -182,6 +182,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         end
 
         local sharedLoot = {};
+        -- determine whats shared
         for k,v in pairs(specTables[1]) do
             isSharedLoot = true;
             for lsh_specFilter = 2, lsh_numSpecializations, 1 do
@@ -210,7 +211,9 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
                 end
             end
         end
-        displaySpecLoot(specTables, sharedLoot, "dungeon")
+        C_Timer.After(0.1, function()
+            displaySpecLoot(specTables, sharedLoot, "dungeon")
+        end)
     end
 end
 
@@ -236,6 +239,7 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
 	if(event == "PLAYER_ENTERING_WORLD") then
         disabled = false;
         mostRecentBoss = nil;
+        lsh_journal_opened = false;
         LootSpecHelperEventFrame:onLoad();
         inInstance, instanceType = IsInInstance()
         if (inInstance) and (instanceType == "party") then
@@ -250,13 +254,15 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
             if inTargetedInstance == true then
                 determineDungeonDropsForLootSpecs(lsh_instanceName);
             else
-                print("is not targeted dungeon")
             end
         end
 
     elseif(event == "ADDON_LOADED" ) then
         if(text == "LootSpecHelper") then
             LootSpecHelperEventFrame:LoadSavedVariables();
+        end
+        if(text == "Blizzard_EncounterJournal") then
+            lsh_journal_opened = true;
         end
     elseif(event == "PLAYER_TARGET_CHANGED") then
         checkTarget()
@@ -274,7 +280,7 @@ LootSpecHelperEventFrame:RegisterEvent("ADDON_LOADED")
 LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 
 function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
-    local raids, dungeons = self:GetInstanceInfo()
+    local raids, dungeons = self:CustomGetInstanceInfo()
 
     local function setLoot(key, type, dungeonName)
         local function buildLink(id, name)
@@ -322,9 +328,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             local modifiersMask = ":"
             local itemContext = "22:"
             local numBonusIDs;
-            -- if levelsBonusId ~= nil then
-            --     numBonusIDs = "2:" .. levelsBonusId .. ":15:"
-            -- end
             if levelsBonusId ~= nil then
                 numBonusIDs = "1:" .. levelsBonusId
             end
@@ -357,10 +360,31 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 addingDifficulty = 16;
             elseif difficulty == "All" then
                 addingDifficulty = 16;
-            else
-                print("Difficulty wasnt set for set loot???")
             end
 
+            local function lsh_On()
+                EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
+                EncounterJournal:RegisterEvent("EJ_DIFFICULTY_UPDATE");
+                EncounterJournal:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+                EncounterJournal:RegisterEvent("PORTRAITS_UPDATED");
+                EncounterJournal:RegisterEvent("SEARCH_DB_LOADED");
+                EncounterJournal:RegisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+            end
+            local function lsh_Off()
+                EncounterJournal:UnregisterEvent("EJ_LOOT_DATA_RECIEVED");
+                EncounterJournal:UnregisterEvent("EJ_DIFFICULTY_UPDATE");
+                EncounterJournal:UnregisterEvent("UNIT_PORTRAIT_UPDATE");
+                EncounterJournal:UnregisterEvent("PORTRAITS_UPDATED");
+                EncounterJournal:UnregisterEvent("SEARCH_DB_LOADED");
+                EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+            end
+
+            if lsh_journal_opened == true then
+                lsh_Off()
+            end
+
+            EJ_SelectTier(EJ_GetNumTiers())
+            EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
             EJ_SelectEncounter(encounterIDs[key])
             EJ_SetDifficulty(addingDifficulty)
             index = 1
@@ -378,14 +402,13 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 table.insert(lootNames, name);
                 index = index + 1
             end
+            lsh_On()
         elseif type == "dungeon" then
             EJ_SelectInstance(encounterIDs[key])
-            --print(encounterIDs[key])
             EJ_SetDifficulty(8)
             for i = 1, EJ_GetNumLoot(), 1 do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(i)
                 if not itemId then break end
-                --print(tprint(itemId))
                 local name = itemId["name"]
                 local itemID = itemId["itemID"]
                 local slot = itemId["slot"]
@@ -513,7 +536,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         addFrameGlobal:AddChild(difficultyDropdown);
 
         local bossesOnly = {};
-        --get raid bosses info
+        --get info for each boss
         for k,v in pairs(raids) do
             if (type(v) == "table") then
                 for key, value in pairs(v) do
@@ -546,6 +569,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 NewItemPopupRaid(lsh_currentPoint, lsh_returnedX, lsh_returnedY)
             end)
         end)
+
         addFrameGlobal:AddChild(bossDropdown);
 
         local lootDropdown = AceGUI:Create("Dropdown")
@@ -877,7 +901,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         button:SetText("Add item");
         button:SetCallback("OnClick", function() NewItemPopupDungeon(nil) end)
         button:SetWidth(325);
-        --button:SetFullWidth(true);
         dungeonScroll:AddChild(button);
     end -- draw dungeon
 
@@ -996,8 +1019,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         local lsh_spec_id, lsh_spec_name = GetSpecializationInfo(lsh_spec_counter)
         lsh_spec_counter = lsh_spec_counter + 1;
         if lsh_lootItemCounter ~= 0 then
-            --print("not 0 for " .. lsh_spec_counter-1)
-
             local individualSpecContainer = AceGUI:Create("InlineGroup");
             individualSpecContainer:SetFullWidth(true);
             individualSpecContainer:SetFullHeight(true);
@@ -1202,7 +1223,6 @@ function checkTarget()
     local needFromBoss = false;
     local targetEncounterId = nil;
     for k,v in pairs(targetedItemsRaid) do
-        --print(tprint(v))
         local compareName = v["boss"]
         local compareName2 = nil;
 
@@ -1227,25 +1247,20 @@ function checkTarget()
         if (v["difficulty"] == currentRaidifficulty) then
             if compareName2 == nil then
                 if (compareName == targetsName) then
-                    --print("matches 1")
                     needFromBoss = true;
                     targetEncounterId = v["encounterId"];
                     break;
                 else
-                    --print("wrong boss")
                 end
             else
                 if (compareName == targetsName) or (compareName2 == targetsName) then
-                    --print("matches 2")
                     needFromBoss = true;
                     targetEncounterId = v["encounterId"];
                     break
                 else
-                    --print("wrong boss")
                 end
             end
         else
-            --print("wrong difficulty")
         end
     end
     if needFromBoss then
@@ -1253,9 +1268,3 @@ function checkTarget()
         determineDropsForLootSpecs(targetEncounterId)
     end
 end
-
-
-
-
--- can enter /lsh enable to re-enable pop ups for the remainder of the session if you disabled them.
--- tooltip does not display the correct ilvl, but for now at least allows you to verify the slot/stats/equip of an item if not be entirely accurate
