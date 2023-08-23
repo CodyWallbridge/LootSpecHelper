@@ -79,27 +79,27 @@ end
 
 function tprint (tbl, indent)
     if not indent then indent = 0 end
-    local toprint = string.rep(" ", indent) .. "{\r\n"
+    local toprnt = string.rep(" ", indent) .. "{\r\n"
     indent = indent + 2
     for k, v in pairs(tbl) do
-      toprint = toprint .. string.rep(" ", indent)
+        toprnt = toprnt .. string.rep(" ", indent)
       if (type(k) == "number") then
-        toprint = toprint .. "[" .. k .. "] = "
+        toprnt = toprnt .. "[" .. k .. "] = "
       elseif (type(k) == "string") then
-        toprint = toprint  .. k ..  "= "
+        toprnt = toprnt  .. k ..  "= "
       end
       if (type(v) == "number") then
-        toprint = toprint .. v .. ",\r\n"
+        toprnt = toprnt .. v .. ",\r\n"
       elseif (type(v) == "string") then
-        toprint = toprint .. "\"" .. v .. "\",\r\n"
+        toprnt = toprnt .. "\"" .. v .. "\",\r\n"
       elseif (type(v) == "table") then
-        toprint = toprint .. tprint(v, indent + 2) .. ",\r\n"
+        toprnt = toprnt .. tprint(v, indent + 2) .. ",\r\n"
       else
-        toprint = toprint .. "\"" .. tostring(v) .. "\",\r\n"
+        toprnt = toprnt .. "\"" .. tostring(v) .. "\",\r\n"
       end
     end
-    toprint = toprint .. string.rep(" ", indent-2) .. "}"
-    return toprint
+    toprnt = toprnt .. string.rep(" ", indent-2) .. "}"
+    return toprnt
 end
 
 function LootSpecHelperEventFrame:CustomGetInstanceInfo()
@@ -141,10 +141,30 @@ end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
     local latestTierIndex = EJ_GetNumTiers()
-    EJ_SelectTier(latestTierIndex)
+
+    local function lsh_On()
+        EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
+        EncounterJournal:RegisterEvent("EJ_DIFFICULTY_UPDATE");
+        EncounterJournal:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+        EncounterJournal:RegisterEvent("PORTRAITS_UPDATED");
+        EncounterJournal:RegisterEvent("SEARCH_DB_LOADED");
+        EncounterJournal:RegisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+    end
+    local function lsh_Off()
+        EncounterJournal:UnregisterEvent("EJ_LOOT_DATA_RECIEVED");
+        EncounterJournal:UnregisterEvent("EJ_DIFFICULTY_UPDATE");
+        EncounterJournal:UnregisterEvent("UNIT_PORTRAIT_UPDATE");
+        EncounterJournal:UnregisterEvent("PORTRAITS_UPDATED");
+        EncounterJournal:UnregisterEvent("SEARCH_DB_LOADED");
+        EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+    end
 
     local targetedInstanceId = nil;
     index = 1
+    if EncounterJournal ~= nil then
+        lsh_Off()
+    end
+    EJ_SelectTier(latestTierIndex)
     while true do
         local lsh_instanceID, lsh_dungeon_instance_name = EJ_GetInstanceByIndex(index, false)
         if not instanceID then break end
@@ -220,6 +240,9 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         C_Timer.After(0.1, function()
             displaySpecLoot(specTables, sharedLoot, "dungeon")
         end)
+    end
+    if EncounterJournal ~= nil then
+        lsh_On()
     end
 end
 
@@ -497,7 +520,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             EJ_SetDifficulty(8)
             for i = 1, EJ_GetNumLoot(), 1 do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(i)
-                if not itemId then print("no item"); break end
+                if not itemId then break end
                 local name = itemId["name"]
                 local itemID = itemId["itemID"]
                 local slot = itemId["slot"]
@@ -806,7 +829,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             dungeonIndex = key;
             setLoot(key, "dungeon", dungeon);
             if encounterLoadedStatus[dungeon] == false then
-                encounterLoadedStatus[boss] = true
+                encounterLoadedStatus[dungeon] = true
                 C_Timer.After(0.1, function()
                     setLoot(key, "dungeon", dungeon);
                 end)
@@ -1285,34 +1308,27 @@ function determineDropsForLootSpecs(passedEncounterId)
         lsh_this_instanceId = tempInstanceId;
         index = index + 1
     end
-    print("instanceId being used is " .. lsh_this_instanceId)
     local lsh_class_id = select(3,UnitClass('player'))
     local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
     local specTables = {};
     local latestTierIndex = EJ_GetNumTiers()
     if EncounterJournal ~= nil then
-        print("turning off")
         lsh_Off()
-    else
-        print("for off it was nil")
     end
     EJ_SelectTier(latestTierIndex)
-    print(latestTierIndex)
     EJ_SelectInstance(lsh_this_instanceId)
     for lsh_specFilter = 1, lsh_numSpecializations, 1 do
         local lsh_currentTable = {};
         lsh_spec_id, lsh_name = GetSpecializationInfo(lsh_specFilter)
         EJ_SetLootFilter(lsh_class_id, lsh_spec_id)
         EJ_SelectEncounter(passedEncounterId)
-        print(passedEncounterId)
         EJ_SetDifficulty(GetRaidDifficultyID())
         index = 1
         while true do
             local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
-            if not itemId then print("no item"); break end
+            if not itemId then break end
             if targetingItem(itemId["itemID"]) then
                 table.insert(lsh_currentTable, itemId["itemID"])
-                print("spec " .. lsh_specFilter .. " needs " .. itemId["name"])
             end
             index = index + 1
         end
@@ -1336,7 +1352,6 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         if isSharedLoot then
             table.insert( sharedLoot,v )
-            print(v .. " is shared loot")
             for lsh_specFilter = 1, lsh_numSpecializations, 1 do
                 local removalCounter = 1
                 for _,value in pairs(specTables[lsh_specFilter]) do
@@ -1352,15 +1367,8 @@ function determineDropsForLootSpecs(passedEncounterId)
     
     C_Timer.After(0.2, function()
         if EncounterJournal ~= nil then
-            print("turning on")
             lsh_On()
-        else
-            print("for on it was nil")
         end
-        print("spec starting")
-        print(tprint(specTables))
-        print("shared")
-        print(tprint(sharedLoot))
         displaySpecLoot(specTables, sharedLoot, "raid")
     end)
 end --determine drops function
@@ -1372,12 +1380,21 @@ function checkTarget()
     end
 
     local targetsName = UnitName("target")
-    print("target is")
-    print(targetsName)
     
     if mostRecentBoss ~= nil then
+        -- chamber bosses
+        if targetsName == "Essence of Shadow" then
+            targetsName = "Shadowflame Amalgamation"
+        elseif targetsName == "Eternal Blaze" then
+            targetsName = "Shadowflame Amalgamation"
+            --experiments bosses
+        elseif targetsName == "Rionthus" then
+            targetsName = "Thadrion"
+        elseif targetsName == "Neldris" then
+            targetsName = "Thadrion"
+        end
         if mostRecentBoss == targetsName then
-            --return
+            return
         end
     end
     if globalSpecLootsFrame ~= nil then
@@ -1389,8 +1406,6 @@ function checkTarget()
     local targetEncounterId = nil;
     for k,v in pairs(targetedItemsRaid) do
         local compareName = v["boss"]
-        print(compareName .. " - " .. v["name"])
-        local compareName2 = nil;
 
         if (compareName == "The Vigilant Steward, Zskarn") then
             compareName = "Zskarn";
@@ -1399,10 +1414,9 @@ function checkTarget()
         elseif (compareName == "Kazzara, the Hellforged") then
             compareName = "Kazzara, the Hellforged";
         elseif (compareName == "The Amalgamation Chamber") then
-            compareName = "Essence of Shadow";
-            compareName2 = "Eternal Blaze";
+            compareName = "Shadowflame Amalgamation";
         elseif (compareName == "The Forgotten Experiments") then
-            compareName = "Neldris";
+            compareName = "Thadrion";
         elseif (compareName == "Rashok, the Elder") then
             compareName = "Rashok";
         elseif (compareName == "Echo of Neltharion") then
@@ -1411,32 +1425,18 @@ function checkTarget()
             compareName = "Scalecommander Sarkareth";
         end
         if (v["difficulty"] == currentRaidifficulty) then
-            if compareName2 == nil then
-                if (compareName == targetsName) then
-                    needFromBoss = true;
-                    targetEncounterId = v["encounterId"];
-                    break;
-                else
-                    print("else")
-                end
+            if (compareName == targetsName) then
+                needFromBoss = true;
+                targetEncounterId = v["encounterId"];
+                break;
             else
-                if (compareName == targetsName) or (compareName2 == targetsName) then
-                    needFromBoss = true;
-                    targetEncounterId = v["encounterId"];
-                    break
-                else
-                    print("else2")
-                end
             end
         else
-            print("else3")
         end
     end
     if needFromBoss then
-        print("need")
         mostRecentBoss = targetsName;
         determineDropsForLootSpecs(targetEncounterId)
     else
-        print("dont need")
     end
 end
