@@ -1144,6 +1144,50 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         disableButton:SetWidth(200);
         scrollContainer:AddChild(disableButton);
     end
+    local function buildLink(id, name, lshPassedDifficulty)
+        local levelsBonusId = nil;
+
+        if lshPassedDifficulty == "lfr" then
+            levelsBonusId = 1459
+        elseif lshPassedDifficulty == "normal" then
+            levelsBonusId = nil
+        elseif lshPassedDifficulty == "heroic" then
+            levelsBonusId = 1485
+        else
+            levelsBonusId = 1498
+        end
+        
+        local specIndex = GetSpecialization();
+        local specId = GetSpecializationInfo(specIndex)
+
+        local itemId = id .. ":"
+        local enchantID = ":"
+        local gemID1 = ":"
+        local gemID2 = ":"
+        local gemID3 = ":"
+        local gemID4 = ":"
+        local suffixID = ":"
+        local uniqueID = ":"
+        local linkLevel = "50:"
+        local specializationID = specId .. ":"
+        local modifiersMask = ":"
+        local itemContext = "22:"
+        local numBonusIDs;
+        if levelsBonusId ~= nil then
+            numBonusIDs = "1:" .. levelsBonusId
+        else
+            numBonusIDs = ":"
+        end
+        local numModifiers = ":"
+        local relic1NumBonusIDs= ":"
+        local relic2NumBonusIDs = ":"
+        local relic3NumBonusIDs = ":"
+        local crafterGUID = ":"
+        local extraEnchantID = ":"
+        local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
+        itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
+        return itemLink2
+    end
 
     local lsh_spec_counter = 1;
     for _,v in pairs(specTables) do
@@ -1164,7 +1208,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
             for key, value in pairs(v) do
                 if passedInstanceType == "raid" then
                     for targetKey, targetValue in pairs(targetedItemsRaid) do
-                        if targetValue["itemId"] == value then
+                        if (targetValue["itemId"] == value) and (targetValue["difficulty"] == GetDifficultyInfo(GetRaidDifficultyID())) then
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"] .. " - " .. GetDifficultyInfo(GetRaidDifficultyID()) );
                             targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
@@ -1174,11 +1218,13 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                                 if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                     GameTooltip_ShowCompareItem(GameTooltip)
                                 end
-                                GameTooltip:SetHyperlink("item:" .. targetValue["itemId"])
+                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], GetDifficultyInfo(GetRaidDifficultyID()))
+                                GameTooltip:SetHyperlink(linkForToolTip)
                             end)
                             targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                             individualSpecContainer:AddChild(targetItem);
                             break
+                        else
                         end
                     end
                 elseif passedInstanceType == "dungeon" then
@@ -1231,7 +1277,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
                     if targetValue["itemId"] == value then
                         local targetItem = AceGUI:Create("InteractiveLabel");
-                        targetItem:SetText(targetValue["name"]);
+                        targetItem:SetText(targetValue["name"] .. " - " .. GetDifficultyInfo(GetRaidDifficultyID()) );
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
                         targetItem:SetImageSize(50,50);
                         targetItem:SetCallback("OnEnter", function(widget)
@@ -1239,7 +1285,8 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                 GameTooltip_ShowCompareItem(GameTooltip)
                             end
-                            GameTooltip:SetHyperlink("item:" .. targetValue["itemId"])
+                            local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], GetDifficultyInfo(GetRaidDifficultyID()))
+                            GameTooltip:SetHyperlink(linkForToolTip)
                             end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                         sharedSpecContainer:AddChild(targetItem);
@@ -1248,7 +1295,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 end
             elseif passedInstanceType == "dungeon" then
                 for targetKey, targetValue in pairs(targetedItemsDungeon) do
-                    if targetValue["itemId"] == value then
+                    if (targetValue["itemId"] == value) and (targetValue["difficulty"] == GetDifficultyInfo(GetRaidDifficultyID())) then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         targetItem:SetText(targetValue["name"]);
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
@@ -1279,7 +1326,6 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         return nil;
     end
-
     
     local function lsh_On()
         EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
@@ -1404,6 +1450,9 @@ function checkTarget()
 
     local needFromBoss = false;
     local targetEncounterId = nil;
+    if targetsName ~= nil then
+        print("target is " .. targetsName)
+    end
     for k,v in pairs(targetedItemsRaid) do
         local compareName = v["boss"]
 
@@ -1421,8 +1470,6 @@ function checkTarget()
             compareName = "Rashok";
         elseif (compareName == "Echo of Neltharion") then
             compareName = "Neltharion";
-        elseif (compareName == "Scalecommander Sarkareth") then
-            compareName = "Scalecommander Sarkareth";
         end
         if (v["difficulty"] == currentRaidifficulty) then
             if (compareName == targetsName) then
@@ -1438,5 +1485,9 @@ function checkTarget()
         mostRecentBoss = targetsName;
         determineDropsForLootSpecs(targetEncounterId)
     else
+        print("dont need")
     end
 end
+
+--resolved tooltip errors in raid popup that showed wrong ilvl in tooltip
+--resolved text in raid popup that showed no difficulty for a targeted item if it was shared spec
