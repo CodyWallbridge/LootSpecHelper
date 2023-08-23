@@ -43,6 +43,8 @@ lsh_journal_opened = false;
 
 notLoadedItems = {};
 
+encounterLoadedStatus = {}
+
 keyLevels = {
     "2",
     "3",
@@ -117,6 +119,7 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
         while true do
             local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndex)
             if not bossName then break end
+            encounterLoadedStatus[bossName] = false
             table.insert(bosses, {name = bossName, id = encounterID})
             bossIndex = bossIndex + 1
         end
@@ -129,6 +132,7 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
     while true do
         local instanceID, name = EJ_GetInstanceByIndex(index, false)
         if not instanceID then break end
+        encounterLoadedStatus[name] = false
         table.insert(dungeons, {instanceName = name, instanceID = instanceID})
         index = index + 1
     end
@@ -476,8 +480,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             index = 1
             while true do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
-                if not itemId then print("no item"); break end
-                print(itemId["name"])
+                if not itemId then break end
                 local name = itemId["name"]
                 local itemID = itemId["itemID"]
                 local slot = itemId["slot"]
@@ -658,8 +661,13 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         bossDropdown:SetCallback("OnValueChanged", function(widget, event, key)
             boss = bossesOnly[key];
             bossIndex = key;
-            print("setting for " .. boss .. " with index " .. bossIndex)
             setLoot(key, "raid");
+            if encounterLoadedStatus[boss] == false then
+                encounterLoadedStatus[boss] = true
+                C_Timer.After(0.1, function()
+                    setLoot(key, "raid");
+                end)
+            end
             C_Timer.After(0.2, function()
                 local lsh_currentPoint, lsh_returnedTableThing, lsh_currentPointRepeat, lsh_returnedX, lsh_returnedY = addFrameGlobal:GetPoint()
                 addFrameGlobal:ReleaseChildren();
@@ -797,7 +805,13 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             dungeon = dungeonsOnly[key];
             dungeonIndex = key;
             setLoot(key, "dungeon", dungeon);
-            C_Timer.After(0.5, function()
+            if encounterLoadedStatus[dungeon] == false then
+                encounterLoadedStatus[boss] = true
+                C_Timer.After(0.1, function()
+                    setLoot(key, "dungeon", dungeon);
+                end)
+            end
+            C_Timer.After(0.2, function()
                 local lsh_currentPoint, lsh_returnedTableThing, lsh_currentPointRepeat, lsh_returnedX, lsh_returnedY = addFrameGlobal:GetPoint()
                 addFrameGlobal:ReleaseChildren();
                 addFrameGlobal:Release();
