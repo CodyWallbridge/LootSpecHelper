@@ -41,6 +41,8 @@ disabled = false;
 
 lsh_journal_opened = false;
 
+notLoadedItems = {};
+
 keyLevels = {
     "2",
     "3",
@@ -224,6 +226,8 @@ function LootSpecHelperEventFrame:onLoad()
 	LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 	LootSpecHelperEventFrame:RegisterEvent("ENCOUNTER_END")
 	LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
+	LootSpecHelperEventFrame:RegisterEvent("EJ_LOOT_DATA_RECIEVED")
+	LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 end
 
 function LootSpecHelperEventFrame:LoadSavedVariables()
@@ -232,6 +236,87 @@ function LootSpecHelperEventFrame:LoadSavedVariables()
     end
 	if targetedItemsDungeon == nil then
         targetedItemsDungeon = {};
+    end
+end
+
+function checkLoadedItem(loadedItemId)
+    local function buildLink(id, name)
+        local specIndex = GetSpecialization();
+        local specId = GetSpecializationInfo(specIndex)
+
+        local levelsBonusId = nil;
+        local level = dungeonLevel;
+
+        if level == "2" then
+            levelsBonusId = 1624
+        elseif level == "3" or level == "4" then
+            levelsBonusId = 1627
+        elseif level == "5" or level == "6" then
+            levelsBonusId = 1630
+        elseif level == "7" or level == "8" then
+            levelsBonusId = 1633
+        elseif level == "9" or level == "10" then
+            levelsBonusId = 1637
+        elseif level == "11" or level == "12" then
+            levelsBonusId = 1640
+        elseif level == "13" or level == "14" then
+            levelsBonusId = 1643
+        elseif level == "15" or level == "16" then
+            levelsBonusId = 1646
+        elseif level == "17" or level == "18" then
+            levelsBonusId = 1650
+        elseif level == "19" or level == "20+" then
+            levelsBonusId = 1653
+        else
+            print("level was different. " )
+            print(dungeonLevel)
+        end
+
+        local itemId = id .. ":"
+        local enchantID = ":"
+        local gemID1 = ":"
+        local gemID2 = ":"
+        local gemID3 = ":"
+        local gemID4 = ":"
+        local suffixID = ":"
+        local uniqueID = ":"
+        local linkLevel = "50:"
+        local specializationID = specId .. ":"
+        local modifiersMask = ":"
+        local itemContext = "22:"
+        local numBonusIDs;
+        if levelsBonusId ~= nil then
+            numBonusIDs = "1:" .. levelsBonusId
+        end
+        local numModifiers = ":"
+        local relic1NumBonusIDs= ":"
+        local relic2NumBonusIDs = ":"
+        local relic3NumBonusIDs = ":"
+        local crafterGUID = ":"
+        local extraEnchantID = ":"
+        local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
+        itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
+        return itemLink2
+    end
+    local lsh_removeCounter = 1;
+    for _,v in pairs(notLoadedItems) do
+        if v == loadedItemId then
+            itemName = GetItemInfo(loadedItemId) 
+            local newLink = buildLink( loadedItemId, itemName)
+            local indexCounter = 1
+            local newRow = nil;
+            for _,value in pairs(loot) do
+                if value["itemID"] == loadedItemId then
+                    newRow = value;
+                    break
+                end
+                indexCounter = indexCounter + 1;
+            end
+            newRow["link"] = newLink
+            newRow["name"] = itemName
+            loot[indexCounter] = newRow
+        end
+        lsh_removeCounter = lsh_removeCounter + 1;
     end
 end
 
@@ -256,7 +341,6 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
             else
             end
         end
-
     elseif(event == "ADDON_LOADED" ) then
         if(text == "LootSpecHelper") then
             LootSpecHelperEventFrame:LoadSavedVariables();
@@ -267,11 +351,13 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
     elseif(event == "PLAYER_TARGET_CHANGED") then
         checkTarget()
     elseif(event == "ENCOUNTER_END") then
-        encounterID, encounterName, difficultyID, groupSize, success = ...;
-        print("the encounter that just ended has the name of " .. encounterName)
+        encounterName, encounterID, difficultyID, groupSize, success = ...;
+        print("the encounter that just ended has the name  of " .. encounterName)
         if encounterName == mostRecentBoss then
             mostRecentBoss = nil;
         end
+    elseif(event == "EJ_LOOT_DATA_RECIEVED") then
+        checkLoadedItem(text)
     end -- if its the event we want
 end --function
 
@@ -347,6 +433,27 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         local class_id = select(3,UnitClass('player'))
         EJ_SetLootFilter(class_id)
 
+        local function lsh_On()
+            EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
+            EncounterJournal:RegisterEvent("EJ_DIFFICULTY_UPDATE");
+            EncounterJournal:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+            EncounterJournal:RegisterEvent("PORTRAITS_UPDATED");
+            EncounterJournal:RegisterEvent("SEARCH_DB_LOADED");
+            EncounterJournal:RegisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+        end
+        local function lsh_Off()
+            EncounterJournal:UnregisterEvent("EJ_LOOT_DATA_RECIEVED");
+            EncounterJournal:UnregisterEvent("EJ_DIFFICULTY_UPDATE");
+            EncounterJournal:UnregisterEvent("UNIT_PORTRAIT_UPDATE");
+            EncounterJournal:UnregisterEvent("PORTRAITS_UPDATED");
+            EncounterJournal:UnregisterEvent("SEARCH_DB_LOADED");
+            EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+        end
+
+        if lsh_journal_opened == true then
+            lsh_Off()
+        end
+
         if type == "raid" then
 
             local addingDifficulty = 0;
@@ -362,27 +469,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 addingDifficulty = 16;
             end
 
-            local function lsh_On()
-                EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
-                EncounterJournal:RegisterEvent("EJ_DIFFICULTY_UPDATE");
-                EncounterJournal:RegisterEvent("UNIT_PORTRAIT_UPDATE");
-                EncounterJournal:RegisterEvent("PORTRAITS_UPDATED");
-                EncounterJournal:RegisterEvent("SEARCH_DB_LOADED");
-                EncounterJournal:RegisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
-            end
-            local function lsh_Off()
-                EncounterJournal:UnregisterEvent("EJ_LOOT_DATA_RECIEVED");
-                EncounterJournal:UnregisterEvent("EJ_DIFFICULTY_UPDATE");
-                EncounterJournal:UnregisterEvent("UNIT_PORTRAIT_UPDATE");
-                EncounterJournal:UnregisterEvent("PORTRAITS_UPDATED");
-                EncounterJournal:UnregisterEvent("SEARCH_DB_LOADED");
-                EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
-            end
-
-            if lsh_journal_opened == true then
-                lsh_Off()
-            end
-
             EJ_SelectTier(EJ_GetNumTiers())
             EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
             EJ_SelectEncounter(encounterIDs[key])
@@ -390,7 +476,8 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             index = 1
             while true do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
-                if not itemId then break end
+                if not itemId then print("no item"); break end
+                print(itemId["name"])
                 local name = itemId["name"]
                 local itemID = itemId["itemID"]
                 local slot = itemId["slot"]
@@ -402,22 +489,32 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 table.insert(lootNames, name);
                 index = index + 1
             end
-            lsh_On()
         elseif type == "dungeon" then
             EJ_SelectInstance(encounterIDs[key])
             EJ_SetDifficulty(8)
             for i = 1, EJ_GetNumLoot(), 1 do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(i)
-                if not itemId then break end
+                if not itemId then print("no item"); break end
                 local name = itemId["name"]
                 local itemID = itemId["itemID"]
                 local slot = itemId["slot"]
                 local encounterID = itemId["encounterID"]
                 local icon = itemId["icon"]
-                local itemLink = buildLink(itemID, name)
-                table.insert(loot, {itemID = itemID,  encounterId = encounterID, name = name, icon = icon, slot = slot, dungeon = dungeonName, link = itemLink});
-                table.insert(lootNames, name);
+                if name ~= nil then
+                    local itemLink = buildLink(itemID, name)
+                    table.insert(loot, {itemID = itemID,  encounterId = encounterID, name = name, icon = icon, slot = slot, dungeon = dungeonName, link = itemLink});
+                    table.insert(lootNames, name);
+                else
+                    local itemLink = "|cffa335ee|Hitem:".. itemID .. "]|h|r"
+                    table.insert(loot, {itemID = itemID,  encounterId = encounterID, name = name, icon = icon, slot = slot, dungeon = dungeonName, link = itemLink});
+                    table.insert(lootNames, name);
+                    table.insert( notLoadedItems, itemID )
+                end
+                --local itemLink = buildLink(itemID, name)
             end
+        end
+        if lsh_journal_opened == true then
+            lsh_On()
         end
     end
 
@@ -561,6 +658,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         bossDropdown:SetCallback("OnValueChanged", function(widget, event, key)
             boss = bossesOnly[key];
             bossIndex = key;
+            print("setting for " .. boss .. " with index " .. bossIndex)
             setLoot(key, "raid");
             C_Timer.After(0.2, function()
                 local lsh_currentPoint, lsh_returnedTableThing, lsh_currentPointRepeat, lsh_returnedX, lsh_returnedY = addFrameGlobal:GetPoint()
@@ -1145,25 +1243,62 @@ function determineDropsForLootSpecs(passedEncounterId)
         return nil;
     end
 
-    local instanceID = EJ_GetInstanceByIndex(lsh_raidIndex, true)
-    EJ_SelectInstance(instanceID)
+    
+    local function lsh_On()
+        EncounterJournal:RegisterEvent("EJ_LOOT_DATA_RECIEVED");
+        EncounterJournal:RegisterEvent("EJ_DIFFICULTY_UPDATE");
+        EncounterJournal:RegisterEvent("UNIT_PORTRAIT_UPDATE");
+        EncounterJournal:RegisterEvent("PORTRAITS_UPDATED");
+        EncounterJournal:RegisterEvent("SEARCH_DB_LOADED");
+        EncounterJournal:RegisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+    end
+    local function lsh_Off()
+        EncounterJournal:UnregisterEvent("EJ_LOOT_DATA_RECIEVED");
+        EncounterJournal:UnregisterEvent("EJ_DIFFICULTY_UPDATE");
+        EncounterJournal:UnregisterEvent("UNIT_PORTRAIT_UPDATE");
+        EncounterJournal:UnregisterEvent("PORTRAITS_UPDATED");
+        EncounterJournal:UnregisterEvent("SEARCH_DB_LOADED");
+        EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
+    end
+
+    local index = 1
+    local lsh_this_instanceId = nil
+    while true do
+        tempInstanceId = EJ_GetInstanceByIndex(index, true)
+        if not tempInstanceId then
+            break
+        end
+        lsh_this_instanceId = tempInstanceId;
+        index = index + 1
+    end
+    print("instanceId being used is " .. lsh_this_instanceId)
     local lsh_class_id = select(3,UnitClass('player'))
     local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
     local specTables = {};
     local latestTierIndex = EJ_GetNumTiers()
+    if EncounterJournal ~= nil then
+        print("turning off")
+        lsh_Off()
+    else
+        print("for off it was nil")
+    end
     EJ_SelectTier(latestTierIndex)
+    print(latestTierIndex)
+    EJ_SelectInstance(lsh_this_instanceId)
     for lsh_specFilter = 1, lsh_numSpecializations, 1 do
         local lsh_currentTable = {};
         lsh_spec_id, lsh_name = GetSpecializationInfo(lsh_specFilter)
         EJ_SetLootFilter(lsh_class_id, lsh_spec_id)
-
         EJ_SelectEncounter(passedEncounterId)
+        print(passedEncounterId)
+        EJ_SetDifficulty(GetRaidDifficultyID())
         index = 1
         while true do
             local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
-            if not itemId then break end
+            if not itemId then print("no item"); break end
             if targetingItem(itemId["itemID"]) then
                 table.insert(lsh_currentTable, itemId["itemID"])
+                print("spec " .. lsh_specFilter .. " needs " .. itemId["name"])
             end
             index = index + 1
         end
@@ -1187,6 +1322,7 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         if isSharedLoot then
             table.insert( sharedLoot,v )
+            print(v .. " is shared loot")
             for lsh_specFilter = 1, lsh_numSpecializations, 1 do
                 local removalCounter = 1
                 for _,value in pairs(specTables[lsh_specFilter]) do
@@ -1199,7 +1335,20 @@ function determineDropsForLootSpecs(passedEncounterId)
             end
         end
     end
-    displaySpecLoot(specTables, sharedLoot, "raid")
+    
+    C_Timer.After(0.2, function()
+        if EncounterJournal ~= nil then
+            print("turning on")
+            lsh_On()
+        else
+            print("for on it was nil")
+        end
+        print("spec starting")
+        print(tprint(specTables))
+        print("shared")
+        print(tprint(sharedLoot))
+        displaySpecLoot(specTables, sharedLoot, "raid")
+    end)
 end --determine drops function
 
 
@@ -1209,10 +1358,12 @@ function checkTarget()
     end
 
     local targetsName = UnitName("target")
+    print("target is")
+    print(targetsName)
     
     if mostRecentBoss ~= nil then
         if mostRecentBoss == targetsName then
-            return
+            --return
         end
     end
     if globalSpecLootsFrame ~= nil then
@@ -1224,6 +1375,7 @@ function checkTarget()
     local targetEncounterId = nil;
     for k,v in pairs(targetedItemsRaid) do
         local compareName = v["boss"]
+        print(compareName .. " - " .. v["name"])
         local compareName2 = nil;
 
         if (compareName == "The Vigilant Steward, Zskarn") then
@@ -1231,7 +1383,7 @@ function checkTarget()
         elseif (compareName == "Assault of the Zaqali") then
             compareName = "Warlord Kagni";
         elseif (compareName == "Kazzara, the Hellforged") then
-            compareName = "Kazzara";
+            compareName = "Kazzara, the Hellforged";
         elseif (compareName == "The Amalgamation Chamber") then
             compareName = "Essence of Shadow";
             compareName2 = "Eternal Blaze";
@@ -1251,6 +1403,7 @@ function checkTarget()
                     targetEncounterId = v["encounterId"];
                     break;
                 else
+                    print("else")
                 end
             else
                 if (compareName == targetsName) or (compareName2 == targetsName) then
@@ -1258,13 +1411,18 @@ function checkTarget()
                     targetEncounterId = v["encounterId"];
                     break
                 else
+                    print("else2")
                 end
             end
         else
+            print("else3")
         end
     end
     if needFromBoss then
+        print("need")
         mostRecentBoss = targetsName;
         determineDropsForLootSpecs(targetEncounterId)
+    else
+        print("dont need")
     end
 end
