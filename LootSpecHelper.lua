@@ -1145,9 +1145,10 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         scrollContainer:AddChild(disableButton);
     end
     local function buildLink(id, name, lshPassedDifficulty)
+        print("got difficulty " .. lshPassedDifficulty)
         local levelsBonusId = nil;
 
-        if lshPassedDifficulty == "lfr" then
+        if lshPassedDifficulty == "Lfr" then
             levelsBonusId = 1459
         elseif lshPassedDifficulty == "normal" then
             levelsBonusId = nil
@@ -1208,9 +1209,13 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
             for key, value in pairs(v) do
                 if passedInstanceType == "raid" then
                     for targetKey, targetValue in pairs(targetedItemsRaid) do
-                        if (targetValue["itemId"] == value) and (targetValue["difficulty"] == GetDifficultyInfo(GetRaidDifficultyID())) then
+                        lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
+                        if lsh_thisDifficult == "Looking For Raid" then
+                            lsh_thisDifficult = "Lfr"
+                        end
+                        if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) then
                             local targetItem = AceGUI:Create("InteractiveLabel");
-                            targetItem:SetText(targetValue["name"] .. " - " .. GetDifficultyInfo(GetRaidDifficultyID()) );
+                            targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult);
                             targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
                             targetItem:SetImageSize(50,50);
                             targetItem:SetCallback("OnEnter", function(widget) 
@@ -1218,7 +1223,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                                 if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                     GameTooltip_ShowCompareItem(GameTooltip)
                                 end
-                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], GetDifficultyInfo(GetRaidDifficultyID()))
+                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], lsh_thisDifficult)
                                 GameTooltip:SetHyperlink(linkForToolTip)
                             end)
                             targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
@@ -1277,7 +1282,11 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
                     if targetValue["itemId"] == value then
                         local targetItem = AceGUI:Create("InteractiveLabel");
-                        targetItem:SetText(targetValue["name"] .. " - " .. GetDifficultyInfo(GetRaidDifficultyID()) );
+                        lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
+                        if lsh_thisDifficult == "Looking For Raid" then
+                            lsh_thisDifficult = "Lfr"
+                        end
+                        targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult);
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
                         targetItem:SetImageSize(50,50);
                         targetItem:SetCallback("OnEnter", function(widget)
@@ -1285,7 +1294,11 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                 GameTooltip_ShowCompareItem(GameTooltip)
                             end
-                            local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], GetDifficultyInfo(GetRaidDifficultyID()))
+                            local lsh_this_raidDiff = GetDifficultyInfo(GetRaidDifficultyID())
+                            if lsh_this_raidDiff == "Looking For Raid" then
+                                lsh_this_raidDiff = "Lfr"
+                            end
+                            local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], lsh_this_raidDiff)
                             GameTooltip:SetHyperlink(linkForToolTip)
                             end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
@@ -1320,7 +1333,11 @@ end
 function determineDropsForLootSpecs(passedEncounterId)
     local function targetingItem(passedItemId)
         for k, v in pairs(targetedItemsRaid) do
-            if (v["itemId"] == passedItemId) and (v["difficulty"] == GetDifficultyInfo(GetRaidDifficultyID())) then
+            local currentDiff = GetDifficultyInfo(GetRaidDifficultyID())
+            if currentDiff == "Looking For Raid" then
+                currentDiff = "Lfr"
+            end
+            if (v["itemId"] == passedItemId) and (v["difficulty"] == currentDiff) then
                 return v["name"]
             end
         end
@@ -1415,7 +1432,9 @@ function determineDropsForLootSpecs(passedEncounterId)
         if EncounterJournal ~= nil then
             lsh_On()
         end
-        displaySpecLoot(specTables, sharedLoot, "raid")
+        C_Timer.After(0.2, function()
+            displaySpecLoot(specTables, sharedLoot, "raid")
+        end)
     end)
 end --determine drops function
 
@@ -1439,6 +1458,7 @@ function checkTarget()
         elseif targetsName == "Neldris" then
             targetsName = "Thadrion"
         end
+
         if mostRecentBoss == targetsName then
             return
         end
@@ -1447,6 +1467,9 @@ function checkTarget()
         globalSpecLootsFrame:Release()
     end
     currentRaidifficulty = GetDifficultyInfo(GetRaidDifficultyID())
+    if currentRaidifficulty == "Looking For Raid" then
+        currentRaidifficulty = "Lfr"
+    end
 
     local needFromBoss = false;
     local targetEncounterId = nil;
@@ -1491,3 +1514,4 @@ end
 
 --resolved tooltip errors in raid popup that showed wrong ilvl in tooltip
 --resolved text in raid popup that showed no difficulty for a targeted item if it was shared spec
+--resolved issue with lfr that caused loot to not show up properly
