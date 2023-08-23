@@ -1101,6 +1101,10 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 end--CreateLootSpecHelperWindow
 
 function displaySpecLoot(specTables, sharedTable, passedInstanceType)
+    print("spec")
+    print(tprint(specTables))
+    print("shared")
+    print(tprint(sharedTable))
     local specLootsFrame = AceGUI:Create("Frame", "LootSpecHelperDisplayTargets")
 
     -- Add the frame as a global variable under the name `MyGlobalFrameName`
@@ -1308,7 +1312,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 end
             elseif passedInstanceType == "dungeon" then
                 for targetKey, targetValue in pairs(targetedItemsDungeon) do
-                    if (targetValue["itemId"] == value) and (targetValue["difficulty"] == GetDifficultyInfo(GetRaidDifficultyID())) then
+                    if (targetValue["itemId"] == value) then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         targetItem:SetText(targetValue["name"]);
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
