@@ -1504,7 +1504,6 @@ function checkTarget()
     local needFromBoss = false;
     local targetEncounterId = nil;
     if targetsName ~= nil then
-        print("target is " .. targetsName)
     end
     for k,v in pairs(targetedItemsRaid) do
         local compareName = v["boss"]
@@ -1538,13 +1537,5 @@ function checkTarget()
         mostRecentBoss = targetsName;
         determineDropsForLootSpecs(targetEncounterId)
     else
-        print("dont need")
     end
 end
-
---resolved tooltip errors in raid popup that showed wrong ilvl in tooltip
---resolved text in raid popup that showed no difficulty for a targeted item if it was shared spec
---resolved issue with lfr that caused loot to not show up properly
---resolved bug with some items not showing in shared loot but in all loot specs
---added button to bottom of shared loot section so that entire frame was scrollable and not cutoff if the loot extended past the bottom due to a weird Ace3 bug
---
