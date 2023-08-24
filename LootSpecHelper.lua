@@ -217,6 +217,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
                 for _,value in pairs(lsh_currentTable) do
                     if value == v then
                         alsoHas = true;
+                        break;
                     end
                 end
                 if alsoHas == false then
@@ -225,7 +226,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
             end
             if isSharedLoot then
                 table.insert( sharedLoot,v )
-                for lsh_specFilter = 1, lsh_numSpecializations, 1 do
+                for lsh_specFilter = 2, lsh_numSpecializations, 1 do
                     local removalCounter = 1
                     for _,value in pairs(specTables[lsh_specFilter]) do
                         if value == v then
@@ -236,6 +237,16 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
                     table.remove( specTables[lsh_specFilter], removalCounter )
                 end
             end
+        end
+        for k,v in pairs(sharedLoot) do
+            local removalCounter = 1
+            for _,value in pairs(specTables[1]) do
+                if value == v then
+                    break;
+                end
+                removalCounter = removalCounter + 1
+            end
+            table.remove( specTables[1], removalCounter )
         end
         C_Timer.After(0.1, function()
             displaySpecLoot(specTables, sharedLoot, "dungeon")
@@ -1101,10 +1112,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 end--CreateLootSpecHelperWindow
 
 function displaySpecLoot(specTables, sharedTable, passedInstanceType)
-    print("spec")
-    print(tprint(specTables))
-    print("shared")
-    print(tprint(sharedTable))
     local specLootsFrame = AceGUI:Create("Frame", "LootSpecHelperDisplayTargets")
 
     -- Add the frame as a global variable under the name `MyGlobalFrameName`
@@ -1149,7 +1156,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         scrollContainer:AddChild(disableButton);
     end
     local function buildLink(id, name, lshPassedDifficulty)
-        print("got difficulty " .. lshPassedDifficulty)
         local levelsBonusId = nil;
 
         if lshPassedDifficulty == "Lfr" then
@@ -1331,6 +1337,17 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 end
             end
         end
+
+        local swapSpecButton = AceGUI:Create("Button");
+        local lsh_current_spec = GetSpecialization()
+        local lsh_spec_id, lsh_spec_name = GetSpecializationInfo(lsh_current_spec)
+        swapSpecButton:SetText("Set Loot Spec to current spec: " .. lsh_spec_name);
+        swapSpecButton:SetCallback("OnClick", function(widget)
+            SetLootSpecialization(lsh_spec_id)
+            specLootsFrame:Release()
+        end)
+        swapSpecButton:SetFullWidth(true);
+        scrollContainer:AddChild(swapSpecButton);
     end
 end
 
@@ -1419,7 +1436,7 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         if isSharedLoot then
             table.insert( sharedLoot,v )
-            for lsh_specFilter = 1, lsh_numSpecializations, 1 do
+            for lsh_specFilter = 2, lsh_numSpecializations, 1 do
                 local removalCounter = 1
                 for _,value in pairs(specTables[lsh_specFilter]) do
                     if value == v then
@@ -1431,7 +1448,16 @@ function determineDropsForLootSpecs(passedEncounterId)
             end
         end
     end
-    
+    for k,v in pairs(sharedLoot) do
+        local removalCounter = 1
+        for _,value in pairs(specTables[1]) do
+            if value == v then
+                break;
+            end
+            removalCounter = removalCounter + 1
+        end
+        table.remove( specTables[1], removalCounter )
+    end
     C_Timer.After(0.2, function()
         if EncounterJournal ~= nil then
             lsh_On()
@@ -1519,3 +1545,5 @@ end
 --resolved tooltip errors in raid popup that showed wrong ilvl in tooltip
 --resolved text in raid popup that showed no difficulty for a targeted item if it was shared spec
 --resolved issue with lfr that caused loot to not show up properly
+--resolved bug with some items not showing in shared loot but in all loot specs
+--
