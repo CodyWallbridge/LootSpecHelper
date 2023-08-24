@@ -1546,4 +1546,5 @@ end
 --resolved text in raid popup that showed no difficulty for a targeted item if it was shared spec
 --resolved issue with lfr that caused loot to not show up properly
 --resolved bug with some items not showing in shared loot but in all loot specs
+--added button to bottom of shared loot section so that entire frame was scrollable and not cutoff if the loot extended past the bottom due to a weird Ace3 bug
 --
