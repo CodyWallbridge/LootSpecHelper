@@ -67,6 +67,8 @@ keyLevels = {
     "20+"
 }
 
+firstLoading = true
+
 function SlashCmdList.LOOTSPECHELPER(msg, editbox)
     if strtrim(msg) == "enable" then
         disabled = false;
@@ -249,7 +251,12 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
             table.remove( specTables[1], removalCounter )
         end
         C_Timer.After(0.1, function()
-            displaySpecLoot(specTables, sharedLoot, "dungeon")
+            if(firstLoading) then
+                firstLoading = false
+                determineDungeonDropsForLootSpecs(current_lsh_instanceName)
+            else
+                displaySpecLoot(specTables, sharedLoot, "dungeon")
+            end
         end)
     end
     if EncounterJournal ~= nil then
