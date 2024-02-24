@@ -1,3 +1,6 @@
+-- before releasing new version, find "RELEASE"
+-- for updating, find "UPDATE step"
+
 LootSpecHelperEventFrame = CreateFrame("frame", "LootSpecHelper Frame");
 myPrefix = "LootSpecHelper121";
 SLASH_LOOTSPECHELPER1 = "/lsh"
@@ -66,8 +69,6 @@ keyLevels = {
     "19",
     "20+"
 }
-
-firstLoading = true
 
 function SlashCmdList.LOOTSPECHELPER(msg, editbox)
     if strtrim(msg) == "enable" then
@@ -369,6 +370,7 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
 	if(event == "PLAYER_ENTERING_WORLD") then
         disabled = false;
         mostRecentBoss = nil;
+        firstLoading = true
         lsh_journal_opened = false;
         LootSpecHelperEventFrame:onLoad();
         inInstance, instanceType = IsInInstance()
@@ -397,7 +399,8 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
         checkTarget()
     elseif(event == "ENCOUNTER_END") then
         encounterName, encounterID, difficultyID, groupSize, success = ...;
-        print("the encounter that just ended has the name  of " .. encounterName)
+        -- for RELEASE comment print
+        --print("the encounter that just ended has the name  of " .. encounterName)
         if encounterName == mostRecentBoss then
             mostRecentBoss = nil;
         end
@@ -1482,18 +1485,20 @@ function checkTarget()
     end
 
     local targetsName = UnitName("target")
+    -- for RELEASE comment out the next 3 lines
+    -- if targetsName ~= nil then
+    --     print("targeted: " .. targetsName)
+    -- end
     
+    --mostRecentBoss is the last encounter targeted which has loot that is targeted (starts as nil)
+
+    -- if there is a mostRecentBoss, we need to update the targetsName to be the correct encounterName
     if mostRecentBoss ~= nil then
-        -- chamber bosses
-        if targetsName == "Essence of Shadow" then
-            targetsName = "Shadowflame Amalgamation"
-        elseif targetsName == "Eternal Blaze" then
-            targetsName = "Shadowflame Amalgamation"
-            --experiments bosses
-        elseif targetsName == "Rionthus" then
-            targetsName = "Thadrion"
-        elseif targetsName == "Neldris" then
-            targetsName = "Thadrion"
+        -- for UPDATE step 1, change these to new council/multiboss fights
+        if targetsName == "Scorchtail" then
+            targetsName = "Volcoross"
+        elseif targetsName == "Urctos" or targetsName == "Aerwynn" or targetsName == "Pip" then
+            targetsName = "Council of Dreams"
         end
 
         if mostRecentBoss == targetsName then
@@ -1510,25 +1515,23 @@ function checkTarget()
 
     local needFromBoss = false;
     local targetEncounterId = nil;
-    if targetsName ~= nil then
-    end
-    for k,v in pairs(targetedItemsRaid) do
-        local compareName = v["boss"]
 
-        if (compareName == "The Vigilant Steward, Zskarn") then
-            compareName = "Zskarn";
-        elseif (compareName == "Assault of the Zaqali") then
-            compareName = "Warlord Kagni";
-        elseif (compareName == "Kazzara, the Hellforged") then
-            compareName = "Kazzara, the Hellforged";
-        elseif (compareName == "The Amalgamation Chamber") then
-            compareName = "Shadowflame Amalgamation";
-        elseif (compareName == "The Forgotten Experiments") then
-            compareName = "Thadrion";
-        elseif (compareName == "Rashok, the Elder") then
-            compareName = "Rashok";
-        elseif (compareName == "Echo of Neltharion") then
-            compareName = "Neltharion";
+    for k,v in pairs(targetedItemsRaid) do
+        -- compareName is the name given from the loot table API
+        local compareName = v["boss"]
+        
+        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 123456));print(data and data.lines[1].leftText or "not cached yet")
+        -- for UPDATE step 2, change these
+        -- conditional from the LSH menu when adding an item
+        -- new name from above line using npc ID instead of 123456 from wowhead
+        if (compareName == "Council of Dreams") then
+            compareName = "Urctos";
+        elseif (compareName == "Nymue, Weaver of the Cycle") then
+            compareName = "Nymue";
+        elseif (compareName == "Tindral Sageswift, Seer of the Flame") then
+            compareName = "Tindral Sageswift";
+        elseif (compareName == "Fyrakk the Blazing") then
+            compareName = "Fyrakk";
         end
         if (v["difficulty"] == currentRaidifficulty) then
             if (compareName == targetsName) then
