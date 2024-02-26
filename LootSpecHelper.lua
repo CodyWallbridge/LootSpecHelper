@@ -461,7 +461,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             local specializationID = specId .. ":"
             local modifiersMask = ":"
             local itemContext = "22:"
-            local numBonusIDs;
+            local numBonusIDs = "";
             if levelsBonusId ~= nil then
                 numBonusIDs = "1:" .. levelsBonusId
             end
