@@ -152,11 +152,11 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
-    if(EncounterJournal == nil) then
-        print("EJ is nil")
-    else 
-        print("EJ is not nil")
-    end
+    -- if(EncounterJournal == nil) then
+    --     print("EJ is nil")
+    -- else 
+    --     print("EJ is not nil")
+    -- end
     local latestTierIndex = EJ_GetNumTiers()
 
     local function lsh_On()
@@ -200,7 +200,6 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
             for k, v in pairs(targetedItemsDungeon) do
                 if v["itemId"] == passedItemId then
                     local item = Item:CreateFromItemID(v["itemId"])
-                    print("targeting item with id " .. v["itemId"])
                     return v["itemId"]
                 end
             end
@@ -394,30 +393,34 @@ function checkLoadedItem(loadedItemId)
     end
 end
 
-function LootSpecHelperEventFrame:OnEvent(event, text, ... )
-	if(event == "PLAYER_ENTERING_WORLD") then
-        disabled = false;
-        mostRecentBoss = nil;
-        firstLoading = true
-        lsh_journal_opened = false;
-        LootSpecHelperEventFrame:onLoad();
-        inInstance, instanceType = IsInInstance()
-        if (inInstance) and (instanceType == "party") then
-            local inTargetedInstance = false;
-            lsh_instanceName, instanceType, difficultyID, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceID, instanceGroupSize, LfgDungeonID = GetInstanceInfo()
-            for _,v in pairs(targetedItemsDungeon) do
-                if v["dungeon"] == lsh_instanceName then
-                    inTargetedInstance = true;
-                    runningTargetedKey = true;
-                    break;
-                end
-            end
-            if inTargetedInstance == true then
-                determineDungeonDropsForLootSpecs(lsh_instanceName);
-            else
-                runningTargetedKey = false;
+function resetLSH()
+    disabled = false;
+    mostRecentBoss = nil;
+    firstLoading = true
+    lsh_journal_opened = false;
+    LootSpecHelperEventFrame:onLoad();
+    inInstance, instanceType = IsInInstance()
+    if (inInstance) and (instanceType == "party") then
+        local inTargetedInstance = false;
+        lsh_instanceName, instanceType, difficultyID, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceID, instanceGroupSize, LfgDungeonID = GetInstanceInfo()
+        for _,v in pairs(targetedItemsDungeon) do
+            if v["dungeon"] == lsh_instanceName then
+                inTargetedInstance = true;
+                runningTargetedKey = true;
+                break;
             end
         end
+        if inTargetedInstance == true then
+            determineDungeonDropsForLootSpecs(lsh_instanceName);
+        else
+            runningTargetedKey = false;
+        end
+    end
+end
+
+function LootSpecHelperEventFrame:OnEvent(event, text, ... )
+	if(event == "PLAYER_ENTERING_WORLD") then
+        resetLSH()
     elseif(event == "ADDON_LOADED" ) then
         if(text == "LootSpecHelper") then
             LootSpecHelperEventFrame:LoadSavedVariables();
@@ -439,7 +442,6 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
             local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
             local mapInfo = C_Map.GetMapInfo(mapID)
 
-            print("completed dungeon " .. mapInfo.name)
             determineDungeonDropsForLootSpecs(mapInfo.name);
         else
         end
@@ -1466,7 +1468,28 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
     -- Fill Layout - the TabGroup widget will fill the whole frame
     frame:SetLayout("Flow")
 
-    -- Create and add the checkbox
+    -- create and add the button with the text "Reset Popups", add the tooltip "Resets and reactivates LootSpecHelper pop-ups.\nUse /lsh reset in chat for the same action.", then add it to frame
+    local resetButton = AceGUI:Create("Button")
+    resetButton:SetText("Reset Popups")
+    resetButton:SetFullWidth(true)
+    resetButton:SetCallback("OnClick", function(widget)
+        print("LootSpecHelper popups reset.")
+        frame:Fire("OnClose")
+        resetLSH()
+    end)
+    resetButton:SetUserData("tooltip", "Resets and reactivates LootSpecHelper pop-ups.\nUse /lsh reset in chat for the same action.")
+    resetButton:SetCallback("OnEnter", function(widget)
+        local tooltip = widget:GetUserData("tooltip")
+        GameTooltip:SetOwner(widget.frame, "ANCHOR_CURSOR")
+        GameTooltip:SetText(tooltip)
+        GameTooltip:Show()
+    end)
+    resetButton:SetCallback("OnLeave", function(widget)
+        GameTooltip:Hide()
+    end)
+    frame:AddChild(resetButton)
+
+    -- Create and add the disabled checkbox 
     local checkbox = AceGUI:Create("CheckBox")
     checkbox:SetLabel("Disable LootSpecHelper")
     checkbox:SetHeight(25)
@@ -1477,6 +1500,25 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         -- Update your variable with the current value of the checkbox
         disabled = widget:GetValue()
     end)
+    -- Set the tooltip text
+    checkbox:SetUserData("tooltip", "Disables LootSpecHelper loot reminder popups.\nUse /lsh enable or /lsh disable in chat to toggle.")
+
+    -- Set a callback for when the mouse enters the checkbox
+    checkbox:SetCallback("OnEnter", function(widget)
+        -- Get the tooltip text
+        local tooltip = widget:GetUserData("tooltip")
+        -- Show the tooltip
+        GameTooltip:SetOwner(widget.frame, "ANCHOR_CURSOR")
+        GameTooltip:SetText(tooltip)
+        GameTooltip:Show()
+    end)
+
+    -- Set a callback for when the mouse leaves the checkbox
+    checkbox:SetCallback("OnLeave", function(widget)
+        -- Hide the tooltip
+        GameTooltip:Hide()
+    end)
+
     frame:AddChild(checkbox) -- Add checkbox to its container
 
     -- Create the TabGroup
@@ -1541,15 +1583,16 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
     end
     local function buildLink(id, name, lshPassedDifficulty)
         local levelsBonusId = nil;
-
+        
+        -- TODO: this still doesnt work properly with item levels the way they increase but as close as I could get it for right now
+        -- UPDATE step 5: need to update this to whatever the new bonusId is since apparently it changes every expac
         if lshPassedDifficulty == "Lfr" then
             levelsBonusId = 1459
-        elseif lshPassedDifficulty == "normal" then
-            levelsBonusId = nil
-        elseif lshPassedDifficulty == "heroic" then
+        elseif lshPassedDifficulty == "Normal" then
             levelsBonusId = 1485
+        elseif lshPassedDifficulty == "Heroic" then
+            levelsBonusId = 1498
         else
-            -- UPDATE any step: need to update this to whatever the new mythic bonusId is since apparently it changes
             levelsBonusId = 1511
         end
         
@@ -1691,7 +1734,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                     for targetKey, targetValue in pairs(targetedItemsDungeon) do
                         -- if targetValue is the same item
                         if targetValue["itemId"] == value then
-                            print("the item in targeted items dungeon is " .. targetValue)
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"]);
                             targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
