@@ -67,7 +67,9 @@ keyLevels = {
     "17",
     "18",
     "19",
-    "20+"
+    "20+",
+    "6/6 Hero (483)",
+    "4/4 Vault (489)"
 }
 
 runningTargetedKey = false;
@@ -1236,7 +1238,9 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6}
+        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6},
+        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4}
     }
 
     local function GenerateTooltip(itemID, keyLevel)
@@ -1244,6 +1248,12 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
         local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
         local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
+        
+        if keyLevel == 21 then
+            keyLevel = 20
+        elseif keyLevel == 22 then
+            keyLevel = "Vault"
+        end
     
         tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
         table.insert(tooltipData.lines, 2, {
@@ -1648,7 +1658,9 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6}
+        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6},
+        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4}
     }
 
     local function GenerateTooltip(itemID, keyLevel)
@@ -1656,6 +1668,12 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
         local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
         local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
+
+        if keyLevel == 21 then
+            keyLevel = 20
+        elseif keyLevel == 22 then
+            keyLevel = "Vault"
+        end
     
         tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
         table.insert(tooltipData.lines, 2, {
