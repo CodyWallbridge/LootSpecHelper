@@ -1493,7 +1493,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 
     -- add the tab container to the frame
     frame:AddChild(globalTab)
---
 end--CreateLootSpecHelperWindow
 
 function displaySpecLoot(specTables, sharedTable, passedInstanceType)
@@ -1550,7 +1549,8 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         elseif lshPassedDifficulty == "heroic" then
             levelsBonusId = 1485
         else
-            levelsBonusId = 1498
+            -- UPDATE any step: need to update this to whatever the new mythic bonusId is since apparently it changes
+            levelsBonusId = 1511
         end
         
         local specIndex = GetSpecialization();
@@ -1664,6 +1664,9 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                         if lsh_thisDifficult == "Looking For Raid" then
                             lsh_thisDifficult = "Lfr"
                         end
+                        -- TEST THIS
+                        -- if the item is the same as the targeted item and its difficulty is the current difficulty
+                        --if targetValue["itemId"] == value and targetValue["difficulty"] == lsh_thisDifficult then
                         if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) then
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult);
@@ -1674,7 +1677,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                                 if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                     GameTooltip_ShowCompareItem(GameTooltip)
                                 end
-                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], lsh_thisDifficult)
+                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], targetValue["difficulty"])
                                 GameTooltip:SetHyperlink(linkForToolTip)
                             end)
                             targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
@@ -1738,6 +1741,9 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         for key, value in pairs(sharedTable) do
             if passedInstanceType == "raid" then
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
+                    -- TEST THIS
+                    -- if the item is the same as the targeted item and its difficulty is the current difficulty
+                    --if targetValue["itemId"] == value and targetValue["difficulty"] == lsh_thisDifficult then
                     if targetValue["itemId"] == value then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
