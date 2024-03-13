@@ -152,6 +152,11 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
+    if(EncounterJournal == nil) then
+        print("EJ is nil")
+    else 
+        print("EJ is not nil")
+    end
     local latestTierIndex = EJ_GetNumTiers()
 
     local function lsh_On()
@@ -171,12 +176,14 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         EncounterJournal:UnregisterEvent("UI_MODEL_SCENE_INFO_UPDATED");
     end
 
-    local targetedInstanceId = nil; -- this gets set to 65
+    local targetedInstanceId = nil;
     index = 1
     if EncounterJournal ~= nil then
         lsh_Off()
     end
     EJ_SelectTier(latestTierIndex)
+
+    -- targetedInstanceId = this index
     while true do
         local lsh_instanceID, lsh_dungeon_instance_name = EJ_GetInstanceByIndex(index, false)
         if not instanceID then break end
@@ -187,10 +194,12 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         index = index + 1
     end
     if targetedInstanceId ~= nil then
-        local function targetingItem(passedItemName)
+    
+        --check if I am targeting the item with the passed ID
+        local function targetingItem(passedItemId)
             for k, v in pairs(targetedItemsDungeon) do
-                if v["itemId"] == passedItemName then
-                    return v["itemId"]
+                if v["itemId"] == passedItemId then
+                    return v["name"]
                 end
             end
             return nil;
@@ -208,8 +217,12 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
 
             index = 1
             while true do
-                local itemId, encounterId, name = C_EncounterJournal.GetLootInfoByIndex(index);
+                local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
+
+                -- up to here is where the problem is with the loot spec not being set properly in the journal
+
                 if not itemId then break end
+                -- handle the item
                 if targetingItem(itemId["itemID"]) then
                     table.insert(lsh_currentTable, itemId["itemID"])
                 end
@@ -272,6 +285,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         lsh_On()
     end
 end
+
 
 
 function LootSpecHelperEventFrame:onLoad()
@@ -351,7 +365,9 @@ function checkLoadedItem(loadedItemId)
         local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
         itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
         return itemLink2
-    end
+    end    
+
+    
     local lsh_removeCounter = 1;
     for _,v in pairs(notLoadedItems) do
         if v == loadedItemId then
@@ -373,6 +389,93 @@ function checkLoadedItem(loadedItemId)
         lsh_removeCounter = lsh_removeCounter + 1;
     end
 end
+
+-- function checkLoadedItem(loadedItemId)
+        
+    --     --UPDATE step 5: update these ilvls/ranks for the new dungeon levels (same as step 3's)
+    --     local keyLevelInformation = {
+    --         [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+    --         [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+    --         [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+    --         [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+    --         [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+    --         [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+    --         [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+    --         [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+    --         [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+    --         [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+    --         [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+    --         [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+    --         [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+    --         [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+    --         [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+    --         [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+    --         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+    --         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+    --         [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6}
+    --     }
+
+    --     local function GenerateTooltip(itemID, keyLevel)
+    --         local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
+    --         local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
+    --         local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
+    --         local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
+        
+    --         tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
+    --         table.insert(tooltipData.lines, 2, {
+    --           type = 0,
+    --           leftText = PLAYER_DIFFICULTY_MYTHIC_PLUS .. " " .. keyLevel,
+    --           leftColor = GREEN_FONT_COLOR,
+    --         })
+    --         table.insert(tooltipData.lines, 4, {
+    --           type = 0,
+    --           leftText = ITEM_UPGRADE_TOOLTIP_FORMAT:format(upgradeLevel, upgradeMax),
+    --           leftColor = NORMAL_FONT_COLOR,
+    --         })
+    --         for index, line in ipairs(tooltipData.lines) do
+    --           if line.leftText == AUCTION_HOUSE_BUCKET_VARIATION_EQUIPMENT_TOOLTIP then
+    --             table.remove(tooltipData.lines, index)
+    --             table.remove(tooltipData.lines, index - 1)
+    --             break
+    --           end
+    --         end
+    --         local info = {
+    --           tooltipData = tooltipData,
+    --         }
+    --         GameTooltip:ProcessInfo(info)
+    --         GameTooltip:Show()
+    --     end
+    --     local lsh_removeCounter = 1;
+    --     for _,v in pairs(notLoadedItems) do
+    --         if v == loadedItemId then
+    --             itemName = GetItemInfo(loadedItemId) 
+
+    --             -- Search through targetedItemsDungeon for the item with the itemName
+    --             local itemLevel = nil
+    --             for _, item in pairs(targetedItemsDungeon) do
+    --                 if item["name"] == itemName then
+    --                     itemLevel = item["level"]
+    --                     break
+    --                 end
+    --             end
+
+    --             GenerateTooltip(loadedItemId, itemLevel)
+
+    --             local indexCounter = 1
+    --             local newRow = nil;
+    --             for _,value in pairs(loot) do
+    --                 if value["itemID"] == loadedItemId then
+    --                     newRow = value;
+    --                     break
+    --                 end
+    --                 indexCounter = indexCounter + 1;
+    --             end
+    --             newRow["name"] = itemName
+    --             loot[indexCounter] = newRow
+    --         end
+    --         lsh_removeCounter = lsh_removeCounter + 1;
+    --     end
+-- end
 
 function LootSpecHelperEventFrame:OnEvent(event, text, ... )
 	if(event == "PLAYER_ENTERING_WORLD") then
@@ -415,10 +518,11 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
             mostRecentBoss = nil;
         end
     elseif(event == "CHALLENGE_MODE_COMPLETED") then
-        local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
-        local mapInfo = C_Map.GetMapInfo(mapID)
-
         if runningTargetedKey == true then
+            local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
+            local mapInfo = C_Map.GetMapInfo(mapID)
+
+            print("completed dungeon " .. mapInfo.name)
             determineDungeonDropsForLootSpecs(mapInfo.name);
         else
         end
@@ -1124,7 +1228,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                 cardContainer:AddChild(targetItem)
 
-                -- Create a delete button for the item-- Define difficultyMap at a higher scope
                 local difficultyMap = {
                     ["All"] = {"Mythic", "Heroic", "Normal", "Lfr"},
                     ["Mythic"] = {"Heroic", "Normal", "Lfr"},
@@ -1370,7 +1473,10 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                         GameTooltip_ShowCompareItem(GameTooltip)
                     end
-                    GenerateTooltip(itemGroup[1]["itemId"], itemGroup[1]["level"])
+                    local item = Item:CreateFromItemID(itemGroup[1]["itemId"])
+                    item:ContinueOnItemLoad(function()
+                        GenerateTooltip(itemGroup[1]["itemId"], itemGroup[1]["level"])
+                    end)
                 end)
                 targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                 cardContainer:AddChild(targetItem)
@@ -1560,7 +1666,61 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
         itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
         return itemLink2
-    end     
+    end    
+    
+    --UPDATE step 4: update these ilvls/ranks for the new dungeon levels (same as step 3's)
+    local keyLevelInformation = {
+        [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+        [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+        [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+        [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+        [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+        [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+        [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+        [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+        [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+        [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+        [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+        [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+        [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+        [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+        [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+        [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+        [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+        [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6}
+    }
+
+    local function GenerateTooltip(itemID, keyLevel)
+        local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
+        local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
+        local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
+        local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
+    
+        tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
+        table.insert(tooltipData.lines, 2, {
+          type = 0,
+          leftText = PLAYER_DIFFICULTY_MYTHIC_PLUS .. " " .. keyLevel,
+          leftColor = GREEN_FONT_COLOR,
+        })
+        table.insert(tooltipData.lines, 4, {
+          type = 0,
+          leftText = ITEM_UPGRADE_TOOLTIP_FORMAT:format(upgradeLevel, upgradeMax),
+          leftColor = NORMAL_FONT_COLOR,
+        })
+        for index, line in ipairs(tooltipData.lines) do
+          if line.leftText == AUCTION_HOUSE_BUCKET_VARIATION_EQUIPMENT_TOOLTIP then
+            table.remove(tooltipData.lines, index)
+            table.remove(tooltipData.lines, index - 1)
+            break
+          end
+        end
+        local info = {
+          tooltipData = tooltipData,
+        }
+        GameTooltip:ProcessInfo(info)
+        GameTooltip:Show()
+    end
 
     local lsh_spec_counter = 1;
     for _,v in pairs(specTables) do
@@ -1615,9 +1775,11 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                                 if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                     GameTooltip_ShowCompareItem(GameTooltip)
                                 end
-                                GameTooltip:SetHyperlink("item:" .. targetValue["itemId"])
-                                --local linkForToolTip = GenerateTooltip(targetValue["itemId"], )
+                                local item = Item:CreateFromItemID(targetValue["itemId"])
+                                item:ContinueOnItemLoad(function()
+                                    GenerateTooltip(targetValue["itemId"], targetValue["level"])
                                 end)
+                            end)
                             targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                             individualSpecContainer:AddChild(targetItem);
                             break
@@ -1658,7 +1820,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                         if lsh_thisDifficult == "Looking For Raid" then
                             lsh_thisDifficult = "Lfr"
                         end
-                        targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult);
+                        targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult); -- this adds currently difficulty, but ilvl in tooltip is lowest
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
                         targetItem:SetImageSize(50,50);
                         targetItem:SetCallback("OnEnter", function(widget)
