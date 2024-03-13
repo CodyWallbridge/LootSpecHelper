@@ -48,6 +48,7 @@ notLoadedItems = {};
 
 encounterLoadedStatus = {}
 
+-- UPDATE step 6: update key levels if they change
 keyLevels = {
     "2",
     "3",
@@ -154,11 +155,6 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
-    -- if(EncounterJournal == nil) then
-    --     print("EJ is nil")
-    -- else 
-    --     print("EJ is not nil")
-    -- end
     local latestTierIndex = EJ_GetNumTiers()
 
     local function lsh_On()
@@ -212,6 +208,7 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         local lsh_class_id = select(3,UnitClass('player'))
         local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
         local specTables = {};
+
         -- get the targeted items for each spec
         for lsh_specFilter = 1, lsh_numSpecializations, 1 do
             local lsh_currentTable = {};
@@ -291,8 +288,6 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
     end
 end
 
-
-
 function LootSpecHelperEventFrame:onLoad()
 	AceGUI = LibStub("AceGUI-3.0");
 	LootSpecHelperEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -302,6 +297,47 @@ function LootSpecHelperEventFrame:onLoad()
 	LootSpecHelperEventFrame:RegisterEvent("EJ_LOOT_DATA_RECIEVED")
 	LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 end
+
+function LootSpecHelperEventFrame:OnEvent(event, text, ... )
+	if(event == "PLAYER_ENTERING_WORLD") then
+        C_AddOns.LoadAddOn("Blizzard_EncounterJournal")
+        C_Timer.After(0.2, function()
+            resetLSH()
+        end)
+    elseif(event == "ADDON_LOADED" ) then
+        if(text == "LootSpecHelper") then
+            LootSpecHelperEventFrame:LoadSavedVariables();
+        end
+        if(text == "Blizzard_EncounterJournal") then
+            lsh_journal_opened = true;
+        end
+    elseif(event == "PLAYER_TARGET_CHANGED") then
+        checkTarget()
+    elseif(event == "ENCOUNTER_END") then
+        encounterName, encounterID, difficultyID, groupSize, success = ...;
+        -- for RELEASE comment print
+        --print("the encounter that just ended has the name  of " .. encounterName)
+        if encounterName == mostRecentBoss then
+            mostRecentBoss = nil;
+        end
+    elseif(event == "CHALLENGE_MODE_COMPLETED") then
+        if runningTargetedKey == true then
+            local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
+            local mapInfo = C_Map.GetMapInfo(mapID)
+
+            determineDungeonDropsForLootSpecs(mapInfo.name);
+        else
+        end
+    elseif(event == "EJ_LOOT_DATA_RECIEVED") then
+        checkLoadedItem(text)
+    end 
+end --function
+
+LootSpecHelperEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+LootSpecHelperEventFrame:RegisterEvent("ADDON_LOADED")
+LootSpecHelperEventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+LootSpecHelperEventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 
 function LootSpecHelperEventFrame:LoadSavedVariables()
 	if targetedItemsRaid == nil then
@@ -419,43 +455,6 @@ function resetLSH()
         end
     end
 end
-
-function LootSpecHelperEventFrame:OnEvent(event, text, ... )
-	if(event == "PLAYER_ENTERING_WORLD") then
-        resetLSH()
-    elseif(event == "ADDON_LOADED" ) then
-        if(text == "LootSpecHelper") then
-            LootSpecHelperEventFrame:LoadSavedVariables();
-        end
-        if(text == "Blizzard_EncounterJournal") then
-            lsh_journal_opened = true;
-        end
-    elseif(event == "PLAYER_TARGET_CHANGED") then
-        checkTarget()
-    elseif(event == "ENCOUNTER_END") then
-        encounterName, encounterID, difficultyID, groupSize, success = ...;
-        -- for RELEASE comment print
-        --print("the encounter that just ended has the name  of " .. encounterName)
-        if encounterName == mostRecentBoss then
-            mostRecentBoss = nil;
-        end
-    elseif(event == "CHALLENGE_MODE_COMPLETED") then
-        if runningTargetedKey == true then
-            local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
-            local mapInfo = C_Map.GetMapInfo(mapID)
-
-            determineDungeonDropsForLootSpecs(mapInfo.name);
-        else
-        end
-    elseif(event == "EJ_LOOT_DATA_RECIEVED") then
-        checkLoadedItem(text)
-    end 
-end --function
-
-LootSpecHelperEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
-LootSpecHelperEventFrame:RegisterEvent("ADDON_LOADED")
-LootSpecHelperEventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-LootSpecHelperEventFrame:SetScript("OnEvent", LootSpecHelperEventFrame.OnEvent);
 
 function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
     local raids, dungeons = self:CustomGetInstanceInfo()
@@ -1218,7 +1217,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
         end
 
-    --UPDATE step 3: update these ilvls/ranks for the new dungeon levels
+    --UPDATE step 3: update these ilvls/ranks for the new dungeon levels.
     local keyLevelInformation = {
         [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
         [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
@@ -1239,8 +1238,8 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
         [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6},
-        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4}
+        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
     }
 
     local function GenerateTooltip(itemID, keyLevel)
@@ -1248,7 +1247,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
         local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
         local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
-        
+
         if keyLevel == 21 then
             keyLevel = 20
         elseif keyLevel == 22 then
@@ -1659,8 +1658,8 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
         [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6},
-        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4}
+        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
     }
 
     local function GenerateTooltip(itemID, keyLevel)
