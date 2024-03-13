@@ -199,7 +199,9 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
         local function targetingItem(passedItemId)
             for k, v in pairs(targetedItemsDungeon) do
                 if v["itemId"] == passedItemId then
-                    return v["name"]
+                    local item = Item:CreateFromItemID(v["itemId"])
+                    print("targeting item with id " .. v["itemId"])
+                    return v["itemId"]
                 end
             end
             return nil;
@@ -262,6 +264,8 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
                 end
             end
         end
+        
+        --remove shared from all the other tables
         for k,v in pairs(sharedLoot) do
             local removalCounter = 1
             for _,value in pairs(specTables[1]) do
@@ -389,93 +393,6 @@ function checkLoadedItem(loadedItemId)
         lsh_removeCounter = lsh_removeCounter + 1;
     end
 end
-
--- function checkLoadedItem(loadedItemId)
-        
-    --     --UPDATE step 5: update these ilvls/ranks for the new dungeon levels (same as step 3's)
-    --     local keyLevelInformation = {
-    --         [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
-    --         [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-    --         [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-    --         [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-    --         [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-    --         [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-    --         [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-    --         [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-    --         [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-    --         [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-    --         [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-    --         [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-    --         [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-    --         [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-    --         [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-    --         [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-    --         [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-    --         [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-    --         [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6}
-    --     }
-
-    --     local function GenerateTooltip(itemID, keyLevel)
-    --         local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
-    --         local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
-    --         local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
-    --         local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
-        
-    --         tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
-    --         table.insert(tooltipData.lines, 2, {
-    --           type = 0,
-    --           leftText = PLAYER_DIFFICULTY_MYTHIC_PLUS .. " " .. keyLevel,
-    --           leftColor = GREEN_FONT_COLOR,
-    --         })
-    --         table.insert(tooltipData.lines, 4, {
-    --           type = 0,
-    --           leftText = ITEM_UPGRADE_TOOLTIP_FORMAT:format(upgradeLevel, upgradeMax),
-    --           leftColor = NORMAL_FONT_COLOR,
-    --         })
-    --         for index, line in ipairs(tooltipData.lines) do
-    --           if line.leftText == AUCTION_HOUSE_BUCKET_VARIATION_EQUIPMENT_TOOLTIP then
-    --             table.remove(tooltipData.lines, index)
-    --             table.remove(tooltipData.lines, index - 1)
-    --             break
-    --           end
-    --         end
-    --         local info = {
-    --           tooltipData = tooltipData,
-    --         }
-    --         GameTooltip:ProcessInfo(info)
-    --         GameTooltip:Show()
-    --     end
-    --     local lsh_removeCounter = 1;
-    --     for _,v in pairs(notLoadedItems) do
-    --         if v == loadedItemId then
-    --             itemName = GetItemInfo(loadedItemId) 
-
-    --             -- Search through targetedItemsDungeon for the item with the itemName
-    --             local itemLevel = nil
-    --             for _, item in pairs(targetedItemsDungeon) do
-    --                 if item["name"] == itemName then
-    --                     itemLevel = item["level"]
-    --                     break
-    --                 end
-    --             end
-
-    --             GenerateTooltip(loadedItemId, itemLevel)
-
-    --             local indexCounter = 1
-    --             local newRow = nil;
-    --             for _,value in pairs(loot) do
-    --                 if value["itemID"] == loadedItemId then
-    --                     newRow = value;
-    --                     break
-    --                 end
-    --                 indexCounter = indexCounter + 1;
-    --             end
-    --             newRow["name"] = itemName
-    --             loot[indexCounter] = newRow
-    --         end
-    --         lsh_removeCounter = lsh_removeCounter + 1;
-    --     end
--- end
 
 function LootSpecHelperEventFrame:OnEvent(event, text, ... )
 	if(event == "PLAYER_ENTERING_WORLD") then
@@ -1723,6 +1640,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
     end
 
     local lsh_spec_counter = 1;
+    -- for each individual specs table of loot
     for _,v in pairs(specTables) do
         local lsh_lootItemCounter = 0;
         for _,_ in pairs(v) do
@@ -1737,6 +1655,8 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
             individualSpecContainer:SetLayout("Flow");
             individualSpecContainer:SetTitle(lsh_spec_name);
             scrollContainer:AddChild(individualSpecContainer);
+
+            --for each item in the specs table
             for key, value in pairs(v) do
                 if passedInstanceType == "raid" then
                     for targetKey, targetValue in pairs(targetedItemsRaid) do
@@ -1764,8 +1684,11 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                         end
                     end
                 elseif passedInstanceType == "dungeon" then
+                    -- match with targeted item
                     for targetKey, targetValue in pairs(targetedItemsDungeon) do
+                        -- if targetValue is the same item
                         if targetValue["itemId"] == value then
+                            print("the item in targeted items dungeon is " .. targetValue)
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"]);
                             targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
@@ -1811,6 +1734,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         sharedSpecContainer:SetTitle("Shared Spec Loot");
         scrollContainer:AddChild(sharedSpecContainer);
 
+        -- for each item that is in the shared table
         for key, value in pairs(sharedTable) do
             if passedInstanceType == "raid" then
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
@@ -1841,7 +1765,9 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                     end
                 end
             elseif passedInstanceType == "dungeon" then
+                -- match with targeted item
                 for targetKey, targetValue in pairs(targetedItemsDungeon) do
+                    -- if targetValue is the same item
                     if (targetValue["itemId"] == value) then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         targetItem:SetText(targetValue["name"]);
@@ -1852,7 +1778,10 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                 GameTooltip_ShowCompareItem(GameTooltip)
                             end
-                            GameTooltip:SetHyperlink("item:" .. targetValue["itemId"])
+                            local item = Item:CreateFromItemID(targetValue["itemId"])
+                            item:ContinueOnItemLoad(function()
+                                GenerateTooltip(targetValue["itemId"], targetValue["level"])
+                            end)
                         end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                         sharedSpecContainer:AddChild(targetItem);
