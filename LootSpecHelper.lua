@@ -684,7 +684,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     local properLink = selectedItem["link"]
                     EJ_SetLootFilter(class_id)
                     EJ_SelectEncounter(selectedItem["encounterId"])
-                    EJ_SetDifficulty(16) -- lfr is 17, normal is 14, heroic is 15, mythic is 16
+                    EJ_SetDifficulty(16)
                     index = 1
                     while true do
                         local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
