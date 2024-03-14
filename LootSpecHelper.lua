@@ -610,6 +610,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 
     local function NewItemPopupRaid(lsh_currentPoint, lsh_returnedX, lsh_returnedY, parent)
         local function addToTargeted()
+            -- check if the item is already in the targeted list with the passed difficulty
             local function checkContains(checkDifficulty)
                 for _,checkingV in pairs(targetedItemsRaid) do
                     if (selectedItem["itemID"] == checkingV["itemId"]) and (checkDifficulty == checkingV["difficulty"]) then
@@ -620,6 +621,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
 
             if difficulty == "All" then
+                -- if the lfr item isnt already targeted, add it
                 if checkContains("Lfr") == false then
                     local class_id = select(3,UnitClass('player'))
                     local properLink = selectedItem["link"]
@@ -638,6 +640,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Lfr", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
+                -- if the normal item isnt already targeted, add it
                 if checkContains("Normal") == false then
                     local class_id = select(3,UnitClass('player'))
                     local properLink = selectedItem["link"]
@@ -656,6 +659,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Normal", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
+                -- if the heroic item isnt already targeted, add it
                 if checkContains("Heroic") == false then
                     local class_id = select(3,UnitClass('player'))
                     local properLink = selectedItem["link"]
@@ -674,12 +678,13 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Heroic", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
+                -- if the mythic item isnt already targeted, add it
                 if checkContains("Mythic") == false then
                     local class_id = select(3,UnitClass('player'))
                     local properLink = selectedItem["link"]
                     EJ_SetLootFilter(class_id)
                     EJ_SelectEncounter(selectedItem["encounterId"])
-                    EJ_SetDifficulty(16)
+                    EJ_SetDifficulty(16) -- lfr is 17, normal is 14, heroic is 15, mythic is 16
                     index = 1
                     while true do
                         local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
@@ -705,6 +710,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             local difficulties = difficultyMap[difficulty]
             table.insert(difficulties, 1, difficulty) -- Add the selected difficulty to the front of the list
 
+            -- add all the difficulties including and above the selected one
             for _, diff in ipairs(difficulties) do
                 if checkContains(diff) == false then
                     local class_id = select(3,UnitClass('player'))
@@ -1724,9 +1730,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                         if lsh_thisDifficult == "Looking For Raid" then
                             lsh_thisDifficult = "Lfr"
                         end
-                        -- TEST THIS
-                        -- if the item is the same as the targeted item and its difficulty is the current difficulty
-                        --if targetValue["itemId"] == value and targetValue["difficulty"] == lsh_thisDifficult then
                         if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) then
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"] .. " - " .. lsh_thisDifficult);
@@ -1737,8 +1740,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                                 if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                     GameTooltip_ShowCompareItem(GameTooltip)
                                 end
-                                local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], targetValue["difficulty"])
-                                GameTooltip:SetHyperlink(linkForToolTip)
+                                GameTooltip:SetHyperlink(targetValue["link"])
                             end)
                             targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                             individualSpecContainer:AddChild(targetItem);
@@ -1800,10 +1802,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         for key, value in pairs(sharedTable) do
             if passedInstanceType == "raid" then
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
-                    -- TEST THIS
-                    -- if the item is the same as the targeted item and its difficulty is the current difficulty
-                    --if targetValue["itemId"] == value and targetValue["difficulty"] == lsh_thisDifficult then
-                    if targetValue["itemId"] == value then
+                    if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) thens
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
                         if lsh_thisDifficult == "Looking For Raid" then
@@ -1821,8 +1820,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if lsh_this_raidDiff == "Looking For Raid" then
                                 lsh_this_raidDiff = "Lfr"
                             end
-                            local linkForToolTip = buildLink(targetValue["itemId"],targetValue["name"], lsh_this_raidDiff)
-                            GameTooltip:SetHyperlink(linkForToolTip)
+                            GameTooltip:SetHyperlink(targetValue["link"])
                             end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
                         sharedSpecContainer:AddChild(targetItem);
