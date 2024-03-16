@@ -194,9 +194,9 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
     if targetedInstanceId ~= nil then
     
         --check if I am targeting the item with the passed ID
-        local function targetingItem(passedItemId)
+        local function targetingItem(passedItemName)
             for k, v in pairs(targetedItemsDungeon) do
-                if v["itemId"] == passedItemId then
+                if v["name"] == passedItemName then
                     local item = Item:CreateFromItemID(v["itemId"])
                     return v["itemId"]
                 end
@@ -214,17 +214,16 @@ function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
             local lsh_currentTable = {};
             lsh_spec_id, lsh_name = GetSpecializationInfo(lsh_specFilter)
             EJ_SetLootFilter(lsh_class_id, lsh_spec_id)
+            C_EncounterJournal.ResetSlotFilter()
+            EJ_SetDifficulty(8) -- 8 is the difficulty for m+
 
             index = 1
             while true do
                 local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
-
-                -- up to here is where the problem is with the loot spec not being set properly in the journal
-
                 if not itemId then break end
                 -- handle the item
-                if targetingItem(itemId["itemID"]) then
-                    table.insert(lsh_currentTable, itemId["itemID"])
+                if targetingItem(itemId["name"]) then
+                    table.insert(lsh_currentTable, itemId["name"])
                 end
                 index = index + 1
             end
@@ -321,13 +320,12 @@ function LootSpecHelperEventFrame:OnEvent(event, text, ... )
             mostRecentBoss = nil;
         end
     elseif(event == "CHALLENGE_MODE_COMPLETED") then
+        local currentInstanceName = GetInstanceInfo()
         if runningTargetedKey == true then
-            local mapID, level, time, onTime, keystoneUpgradeLevels = C_ChallengeMode.GetCompletionInfo()
-            local mapInfo = C_Map.GetMapInfo(mapID)
-
-            determineDungeonDropsForLootSpecs(mapInfo.name);
-        else
+            determineDungeonDropsForLootSpecs(currentInstanceName);
+            runningTargetedKey = false;
         end
+
     elseif(event == "EJ_LOOT_DATA_RECIEVED") then
         checkLoadedItem(text)
     end 
@@ -1595,53 +1593,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         end)
         disableButton:SetWidth(200);
         scrollContainer:AddChild(disableButton);
-    end
-    local function buildLink(id, name, lshPassedDifficulty)
-        local levelsBonusId = nil;
-        
-        -- TODO: this still doesnt work properly with item levels the way they increase but as close as I could get it for right now
-        -- UPDATE step 5: need to update this to whatever the new bonusId is since apparently it changes every expac
-        if lshPassedDifficulty == "Lfr" then
-            levelsBonusId = 1459
-        elseif lshPassedDifficulty == "Normal" then
-            levelsBonusId = 1485
-        elseif lshPassedDifficulty == "Heroic" then
-            levelsBonusId = 1498
-        else
-            levelsBonusId = 1511
-        end
-        
-        local specIndex = GetSpecialization();
-        local specId = GetSpecializationInfo(specIndex)
-
-        local itemId = id .. ":"
-        local enchantID = ":"
-        local gemID1 = ":"
-        local gemID2 = ":"
-        local gemID3 = ":"
-        local gemID4 = ":"
-        local suffixID = ":"
-        local uniqueID = ":"
-        local linkLevel = "50:"
-        local specializationID = specId .. ":"
-        local modifiersMask = ":"
-        local itemContext = "22:"
-        local numBonusIDs;
-        if levelsBonusId ~= nil then
-            numBonusIDs = "1:" .. levelsBonusId
-        else
-            numBonusIDs = ":"
-        end
-        local numModifiers = ":"
-        local relic1NumBonusIDs= ":"
-        local relic2NumBonusIDs = ":"
-        local relic3NumBonusIDs = ":"
-        local crafterGUID = ":"
-        local extraEnchantID = ":"
-        local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
-        itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
-        return itemLink2
-    end    
+    end  
     
     --UPDATE step 4: update these ilvls/ranks for the new dungeon levels (same as step 3's)
     local keyLevelInformation = {
@@ -1752,7 +1704,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                     -- match with targeted item
                     for targetKey, targetValue in pairs(targetedItemsDungeon) do
                         -- if targetValue is the same item
-                        if targetValue["itemId"] == value then
+                        if targetValue["name"] == value then
                             local targetItem = AceGUI:Create("InteractiveLabel");
                             targetItem:SetText(targetValue["name"]);
                             targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
@@ -1802,7 +1754,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         for key, value in pairs(sharedTable) do
             if passedInstanceType == "raid" then
                 for targetKey, targetValue in pairs(targetedItemsRaid) do
-                    if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) thens
+                    if (targetValue["itemId"] == value) and (targetValue["difficulty"] == lsh_thisDifficult) then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
                         if lsh_thisDifficult == "Looking For Raid" then
@@ -1831,7 +1783,7 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                 -- match with targeted item
                 for targetKey, targetValue in pairs(targetedItemsDungeon) do
                     -- if targetValue is the same item
-                    if (targetValue["itemId"] == value) then
+                    if (targetValue["name"] == value) then
                         local targetItem = AceGUI:Create("InteractiveLabel");
                         targetItem:SetText(targetValue["name"]);
                         targetItem:SetImage(GetItemIcon(targetValue["itemId"]));
@@ -1923,6 +1875,7 @@ function determineDropsForLootSpecs(passedEncounterId)
         EJ_SetLootFilter(lsh_class_id, lsh_spec_id)
         EJ_SelectEncounter(passedEncounterId)
         EJ_SetDifficulty(GetRaidDifficultyID())
+        C_EncounterJournal.ResetSlotFilter()
         index = 1
         while true do
             local itemId = C_EncounterJournal.GetLootInfoByIndex(index);
