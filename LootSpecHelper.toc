@@ -1,7 +1,7 @@
 ## Interface: 100205
 ## Title: LootSpecHelper
 ## Author: Van
-## Version: 1.9
+## Version: 2.0
 ## SavedVariablesPerCharacter: targetedItemsRaid, targetedItemsDungeon
 ## IconTexture: Interface\AddOns\LootSpecHelper\Media\Icons\lshIcon.jpeg
 
