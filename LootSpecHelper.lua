@@ -1657,6 +1657,8 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         GameTooltip:Show()
     end
 
+    lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
+
     local lsh_spec_counter = 1;
     -- for each individual specs table of loot
     for _,v in pairs(specTables) do
@@ -1678,7 +1680,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
             for key, value in pairs(v) do
                 if passedInstanceType == "raid" then
                     for targetKey, targetValue in pairs(targetedItemsRaid) do
-                        lsh_thisDifficult = GetDifficultyInfo(GetRaidDifficultyID())
                         if lsh_thisDifficult == "Looking For Raid" then
                             lsh_thisDifficult = "Lfr"
                         end
@@ -1947,7 +1948,7 @@ function checkTarget()
     -- for RELEASE comment out the next 3 lines
     -- if targetsName ~= nil then
     --     print("targeted: " .. targetsName)
-    -- end
+    -- ends
     
     -- for UPDATE step 1, change these to new council/multiboss fights
     if targetsName == "Pip" or targetsName == "Aerwynn" or targetsName == "Urctos" then
