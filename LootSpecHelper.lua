@@ -1935,10 +1935,25 @@ function checkTarget()
     -- ends
     
     -- for UPDATE step 1, change these to new council/multiboss fights
+    
+    --amirdrassil
     if targetsName == "Pip" or targetsName == "Aerwynn" or targetsName == "Urctos" then
         targetsName = "Council of Dreams"
     elseif targetsName == "Scorchtail" then
         targetsName = "Volcoross"
+    
+    -- aberrus
+    elseif targetsName == "Essence of Shadow" then
+        targetsName = "Shadowflame Amalgamation"
+    elseif targetsName == "Eternal Blaze" then
+        targetsName = "Shadowflame Amalgamation"
+        --experiments bosses
+    elseif targetsName == "Rionthus" then
+        targetsName = "Thadrion"
+    elseif targetsName == "Neldris" then
+        targetsName = "Thadrion"
+
+    -- vault
     end
 
     if mostRecentBoss == targetsName then
