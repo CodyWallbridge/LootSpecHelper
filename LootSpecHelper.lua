@@ -1941,19 +1941,14 @@ function checkTarget()
         targetsName = "Council of Dreams"
     elseif targetsName == "Scorchtail" then
         targetsName = "Volcoross"
-    
     -- aberrus
-    elseif targetsName == "Essence of Shadow" then
+    elseif targetsName == "Essence of Shadow" or targetsName == "Eternal Blaze" then
         targetsName = "Shadowflame Amalgamation"
-    elseif targetsName == "Eternal Blaze" then
-        targetsName = "Shadowflame Amalgamation"
-        --experiments bosses
-    elseif targetsName == "Rionthus" then
-        targetsName = "Thadrion"
-    elseif targetsName == "Neldris" then
-        targetsName = "Thadrion"
-
+    elseif targetsName == "Rionthus" or targetsName == "Neldris" or targetsName == "Thadrion" then
+        targetsName = "The Forgotten Experiments"
     -- vault
+    elseif targetsName == "Kadros Icewrath" or targetsName == "Dathea Stormlash" or targetsName == "Opalfang" or targetsName == "Embar Firepath" then
+        targetsName = "The Primal Council"
     end
 
     if mostRecentBoss == targetsName then
@@ -1975,7 +1970,7 @@ function checkTarget()
         -- compareName is the name given from the loot table API
         local compareName = v["boss"]
         
-        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 189620));print(data and data.lines[1].leftText or "not cached yet")
+        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 187767));print(data and data.lines[1].leftText or "not cached yet")
         -- for UPDATE step 2, change these
         -- conditional from the LSH menu when adding an item
         -- new name from above line using npc ID instead of 123456 from wowhead
@@ -1985,6 +1980,20 @@ function checkTarget()
             compareName = "Tindral Sageswift";
         elseif (compareName == "Fyrakk the Blazing") then
             compareName = "Fyrakk";
+        elseif (compareName == "The Vigilant Steward, Zskarn") then
+            compareName = "Zskarn";
+        elseif (compareName == "Assault of the Zaqali") then
+            compareName = "Warlord Kagni";
+        elseif (compareName == "Kazzara, the Hellforged") then
+            compareName = "Kazzara, the Hellforged";
+        elseif (compareName == "The Amalgamation Chamber") then
+            compareName = "Shadowflame Amalgamation";
+        elseif (compareName == "The Forgotten Experiments") then
+            compareName = "Thadrion";
+        elseif (compareName == "Rashok, the Elder") then
+            compareName = "Rashok";
+        elseif (compareName == "Echo of Neltharion") then
+            compareName = "Neltharion";
         end
         if (v["difficulty"] == currentRaidifficulty) then
             if (compareName == targetsName) then
