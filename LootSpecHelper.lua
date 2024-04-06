@@ -78,6 +78,8 @@ keyLevels = {
 
 runningTargetedKey = false;
 
+local lsh_most_recent_raid_id = nil;
+
 function SlashCmdList.LOOTSPECHELPER(msg, editbox)
     if strtrim(msg) == "enable" then
         disabled = false;
@@ -738,6 +740,24 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 raidDropdown:SetValue(raidIndexSelector)
             end
             addFrameGlobal:AddChild(raidDropdown)
+        else
+            bossesOnly = {};
+            --get info for each boss
+            for k,v in pairs(raids) do
+                if (type(v) == "table") then
+                    for key, value in pairs(v) do
+                        if (type(value) == "table") then
+                            for newkey, newvalue in pairs(value) do
+                                if (type(newvalue) == "table") then
+                                    table.insert(bossesOnly, newvalue["name"])
+                                    table.insert(encounterIDs, newvalue["id"])
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            bossDropdown:SetList(bossesOnly)
         end
 
         local difficultyDropdown = AceGUI:Create("Dropdown")
@@ -1753,10 +1773,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                 GameTooltip_ShowCompareItem(GameTooltip)
                             end
-                            local lsh_this_raidDiff = GetDifficultyInfo(GetRaidDifficultyID())
-                            if lsh_this_raidDiff == "Looking For Raid" then
-                                lsh_this_raidDiff = "Lfr"
-                            end
                             GameTooltip:SetHyperlink(targetValue["link"])
                             end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
@@ -1836,14 +1852,18 @@ function determineDropsForLootSpecs(passedEncounterId)
     end
 
     local index = 1
-    local lsh_this_instanceId = nil
-    while true do
-        tempInstanceId = EJ_GetInstanceByIndex(index, true)
-        if not tempInstanceId then
-            break
+    if lsh_most_recent_raid_id == nil then
+        while true do
+            tempInstanceId, tempName = EJ_GetInstanceByIndex(index, true)
+            if not tempInstanceId then
+                break
+            end
+            lsh_this_instanceId = tempInstanceId;
+            lsh_most_recent_raid_id = tempInstanceId;
+            index = index + 1
         end
-        lsh_this_instanceId = tempInstanceId;
-        index = index + 1
+    else
+        lsh_this_instanceId = lsh_most_recent_raid_id
     end
     local lsh_class_id = select(3,UnitClass('player'))
     local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
@@ -1912,6 +1932,7 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         table.remove( specTables[1], removalCounter )
     end
+
     C_Timer.After(0.2, function()
         if EncounterJournal ~= nil then
             lsh_On()
@@ -1930,9 +1951,9 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    -- if targetsName ~= nil then
-    --     print("targeted: " .. targetsName)
-    -- ends
+    -- if targetsName == "Van" then
+    --     targetsName = "Pip"
+    -- end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
     
