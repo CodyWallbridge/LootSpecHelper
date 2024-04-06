@@ -1,6 +1,5 @@
 -- before releasing new version, find "RELEASE"
 -- for updating, find "UPDATE step"
-
 LootSpecHelperEventFrame = CreateFrame("frame", "LootSpecHelper Frame");
 myPrefix = "LootSpecHelper121";
 SLASH_LOOTSPECHELPER1 = "/lsh"
@@ -22,14 +21,16 @@ raidDifficulties = {
     "Mythic",
     "All"
 };
-encounterIDs = {};
+local encounterIDs = {};
 
 difficulty = nil;
 difficultyIndex = nil;
 boss = nil;
 bossIndex = nil;
 selectedItem = nil;
-
+raid = nil;
+raidIndex = nil;
+raidIndexSelector = nil;
 dungeon = nil;
 dungeonIndex = nil;
 dungeonLevel = nil;
@@ -47,6 +48,8 @@ lsh_journal_opened = false;
 notLoadedItems = {};
 
 encounterLoadedStatus = {}
+
+bossesOnly = {}
 
 -- UPDATE step 6: update key levels if they change
 keyLevels = {
@@ -75,6 +78,8 @@ keyLevels = {
 
 runningTargetedKey = false;
 
+local lsh_most_recent_raid_id = nil;
+
 function SlashCmdList.LOOTSPECHELPER(msg, editbox)
     if strtrim(msg) == "enable" then
         disabled = false;
@@ -92,7 +97,7 @@ function SlashCmdList.LOOTSPECHELPER(msg, editbox)
     end
 end
 
-function tprint (tbl, indent)
+local function tprint (tbl, indent)
     if not indent then indent = 0 end
     local toprnt = string.rep(" ", indent) .. "{\r\n"
     indent = indent + 2
@@ -130,13 +135,13 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
         if not instanceID then break end
         local bosses = {}
         EJ_SelectInstance(instanceID)
-        local bossIndex = 1
+        local bossIndexLoop = 1
         while true do
-            local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndex)
+            local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
             if not bossName then break end
             encounterLoadedStatus[bossName] = false
             table.insert(bosses, {name = bossName, id = encounterID})
-            bossIndex = bossIndex + 1
+            bossIndexLoop = bossIndexLoop + 1
         end
         table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
         index = index + 1
@@ -457,66 +462,7 @@ end
 function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
     local raids, dungeons = self:CustomGetInstanceInfo()
 
-    local function setLoot(key, type, dungeonName, keyLevel)
-        local function buildLink(id, name)
-            local specIndex = GetSpecialization();
-            local specId = GetSpecializationInfo(specIndex)
-
-            local levelsBonusId = nil;
-            local level = dungeonLevel;
-
-            if level == "2" then
-                levelsBonusId = 1624
-            elseif level == "3" or level == "4" then
-                levelsBonusId = 1627
-            elseif level == "5" or level == "6" then
-                levelsBonusId = 1630
-            elseif level == "7" or level == "8" then
-                levelsBonusId = 1633
-            elseif level == "9" or level == "10" then
-                levelsBonusId = 1637
-            elseif level == "11" or level == "12" then
-                levelsBonusId = 1640
-            elseif level == "13" or level == "14" then
-                levelsBonusId = 1643
-            elseif level == "15" or level == "16" then
-                levelsBonusId = 1646
-            elseif level == "17" or level == "18" then
-                levelsBonusId = 1650
-            elseif level == "19" or level == "20+" then
-                levelsBonusId = 1653
-            else
-                print("level was different. " )
-                print(dungeonLevel)
-            end
-
-            local itemId = id .. ":"
-            local enchantID = ":"
-            local gemID1 = ":"
-            local gemID2 = ":"
-            local gemID3 = ":"
-            local gemID4 = ":"
-            local suffixID = ":"
-            local uniqueID = ":"
-            local linkLevel = "50:"
-            local specializationID = specId .. ":"
-            local modifiersMask = ":"
-            local itemContext = "22:"
-            local numBonusIDs = "";
-            if levelsBonusId ~= nil then
-                numBonusIDs = "1:" .. levelsBonusId
-            end
-            local numModifiers = ":"
-            local relic1NumBonusIDs= ":"
-            local relic2NumBonusIDs = ":"
-            local relic3NumBonusIDs = ":"
-            local crafterGUID = ":"
-            local extraEnchantID = ":"
-            local itemLink2 = "|cffa335ee|Hitem:"..itemId..enchantID..gemID1..gemID2..gemID3..gemID4..suffixID..uniqueID..linkLevel..specializationID..modifiersMask..itemContext..numBonusIDs..numModifiers..relic1NumBonusIDs..relic2NumBonusIDs..relic3NumBonusIDs..crafterGUID..extraEnchantID
-            itemLink2 = itemLink2.."|h[" .. name .. "]|h|r"
-            return itemLink2
-        end
-
+    local function setLoot(key, type, dungeonName, keyLevel, instanceIndex)
         loot = {};
         lootNames = {};
         local class_id = select(3,UnitClass('player'))
@@ -544,22 +490,45 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         end
 
         if type == "raid" then
-
             local addingDifficulty = 0;
+            local itemContextChange;
             if difficulty == "Lfr" then
                 addingDifficulty = 17;
+                itemContextChange = Enum.ItemCreationContext.RaidFinderExtended
             elseif difficulty == "Normal" then
                 addingDifficulty = 14;
+                itemContextChange = Enum.ItemCreationContext.RaidNormalExtended
             elseif difficulty == "Heroic" then
                 addingDifficulty = 15;
+                itemContextChange = Enum.ItemCreationContext.RaidHeroicExtended
             elseif difficulty == "Mythic" then
                 addingDifficulty = 16;
+                itemContextChange = Enum.ItemCreationContext.RaidMythicExtended
             elseif difficulty == "All" then
                 addingDifficulty = 16;
+                itemContextChange = Enum.ItemCreationContext.RaidMythicExtended
             end
 
+            FATED = false;
             EJ_SelectTier(EJ_GetNumTiers())
-            EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+
+            local i = 1
+            while true do
+                local instanceID, name, _, _, _, _, _, _, _, _, mapID = EJ_GetInstanceByIndex(i, true)
+                if not mapID then break end
+                local fated = C_ModifiedInstance.GetModifiedInstanceInfoFromMapID(mapID)
+                if fated then
+                    FATED = true
+                    break
+                end
+                i = i+1
+            end
+
+            if not FATED then
+                EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+            else
+                EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
+            end
             EJ_SelectEncounter(encounterIDs[key])
             EJ_SetDifficulty(addingDifficulty)
             index = 1
@@ -572,6 +541,13 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 local encounterID = itemId["encounterID"]
                 local icon = itemId["icon"]
                 local itemLink = itemId["link"]
+                --update the ItemContext in itemLink to be from Fated to increase the item level
+                if FATED and itemLink then
+                    local parts = strsplittable(':', itemLink)
+                    parts[13] = itemContextChange
+                    local newItemLink = table.concat(parts, ":")
+                    itemLink = newItemLink
+                end
                 local encounterName = EJ_GetEncounterInfo(encounterID)
                 table.insert(loot, {itemID = itemID,  encounterId = encounterID, name = name, icon = icon, slot = slot, bossName = encounterName, link = itemLink});
                 table.insert(lootNames, name);
@@ -627,14 +603,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     EJ_SetDifficulty(17)
                     index = 1
-                    while true do
-                        local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
-                        if lootItem["itemID"] == selectedItem["itemID"] then
-                            properLink = lootItem["link"]
-                            break
-                        end
-                        index = index + 1
-                    end
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Lfr", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
@@ -646,14 +614,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     EJ_SetDifficulty(14)
                     index = 1
-                    while true do
-                        local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
-                        if lootItem["itemID"] == selectedItem["itemID"] then
-                            properLink = lootItem["link"]
-                            break
-                        end
-                        index = index + 1
-                    end
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Normal", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
@@ -665,14 +625,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     EJ_SetDifficulty(15)
                     index = 1
-                    while true do
-                        local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
-                        if lootItem["itemID"] == selectedItem["itemID"] then
-                            properLink = lootItem["link"]
-                            break
-                        end
-                        index = index + 1
-                    end
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Heroic", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
@@ -684,14 +636,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     EJ_SetDifficulty(16)
                     index = 1
-                    while true do
-                        local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
-                        if lootItem["itemID"] == selectedItem["itemID"] then
-                            properLink = lootItem["link"]
-                            break
-                        end
-                        index = index + 1
-                    end
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = "Mythic", boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
 
@@ -718,20 +662,11 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     local difficultyId = diff == "Lfr" and 17 or (diff == "Normal" and 14 or (diff == "Heroic" and 15 or 16))
                     EJ_SetDifficulty(difficultyId)
                     index = 1
-                    while true do
-                        local lootItem = C_EncounterJournal.GetLootInfoByIndex(index);
-                        if lootItem["itemID"] == selectedItem["itemID"] then
-                            properLink = lootItem["link"]
-                            break
-                        end
-                        index = index + 1
-                    end
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = diff, boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
             end
         end
 
-        encounterIDs = {};
         raidSaved = false;
 
         addFrameGlobal = AceGUI:Create("Frame")
@@ -740,6 +675,90 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         end
         addFrameGlobal:SetWidth(250)
 	    addFrameGlobal:SetTitle("Add Raid Item")
+
+        FATED = false;
+        EJ_SelectTier(EJ_GetNumTiers())
+        local i = 1
+        while true do
+            local instanceID, name, _, _, _, _, _, _, _, _, mapID = EJ_GetInstanceByIndex(i, true)
+            if not mapID then break end
+            local fated = C_ModifiedInstance.GetModifiedInstanceInfoFromMapID(mapID)
+            if fated then
+                FATED = true
+                break
+            end
+            i = i+1
+        end
+
+        local raidName = nil
+
+        local bossDropdown = AceGUI:Create("Dropdown");
+
+        if FATED then
+            local raidDropdown = AceGUI:Create("Dropdown")
+        -- -- UPDATE: step 7: update these raid names for fated
+        -- -- if FATED is true, make a dropdown for the current expansions raids
+            local raidNames = {
+                "Vault of the Incarnates",
+                "Aberrus, the Shadowed Crucible",
+                "Amirdrassil, the Dream's Hope"
+            }
+            raidDropdown:SetList(raidNames)
+            raidDropdown:SetText("Raid")
+            -- --on change set raid to the selected raid
+            raidDropdown:SetCallback("OnValueChanged", function(widget, event, key)
+                raidIndex = key+1
+                raidName = raidNames[key]
+                raidIndexSelector = key;
+                
+                bossesOnly = {}
+                encounterIDs = {}
+
+                --get info for each boss
+                for k,v in pairs(raids) do
+                    if (type(v) == "table") then
+                        if raidName == nil or v["instanceName"] == raidName then
+                            for key, value in pairs(v) do
+                                if (type(value) == "table") then
+                                    for newkey, newvalue in pairs(value) do
+                                        if (type(newvalue) == "table") then
+                                            table.insert(bossesOnly, newvalue["name"])
+                                            table.insert(encounterIDs, newvalue["id"])
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                bossDropdown:SetList(bossesOnly)
+                bossDropdown:SetValue(nil)
+                bossDropdown:SetText("Boss")
+            end)
+
+            if(raidIndexSelector ~= nil) then
+                raidDropdown:SetValue(raidIndexSelector)
+            end
+            addFrameGlobal:AddChild(raidDropdown)
+        else
+            bossesOnly = {};
+            --get info for each boss
+            for k,v in pairs(raids) do
+                if (type(v) == "table") then
+                    for key, value in pairs(v) do
+                        if (type(value) == "table") then
+                            for newkey, newvalue in pairs(value) do
+                                if (type(newvalue) == "table") then
+                                    table.insert(bossesOnly, newvalue["name"])
+                                    table.insert(encounterIDs, newvalue["id"])
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            bossDropdown:SetList(bossesOnly)
+        end
 
         local difficultyDropdown = AceGUI:Create("Dropdown")
         difficultyDropdown:SetList(raidDifficulties)
@@ -753,37 +772,16 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         end
         addFrameGlobal:AddChild(difficultyDropdown);
 
-        local bossesOnly = {};
-        --get info for each boss
-        for k,v in pairs(raids) do
-            if (type(v) == "table") then
-                for key, value in pairs(v) do
-                    if (type(value) == "table") then
-                        for newkey, newvalue in pairs(value) do
-                            if (type(newvalue) == "table") then
-                                table.insert(bossesOnly, newvalue["name"])
-                                table.insert(encounterIDs, newvalue["id"])
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        local bossDropdown = AceGUI:Create("Dropdown");
         bossDropdown:SetList(bossesOnly);
         bossDropdown:SetText("Boss");
-        if bossIndex ~= nil then
-            bossDropdown:SetValue(bossIndex)
-        end
         bossDropdown:SetCallback("OnValueChanged", function(widget, event, key)
             boss = bossesOnly[key];
             bossIndex = key;
-            setLoot(key, "raid");
+            setLoot(key, "raid", nil, nil, raidIndex);
             if encounterLoadedStatus[boss] == false then
                 encounterLoadedStatus[boss] = true
                 C_Timer.After(0.1, function()
-                    setLoot(key, "raid");
+                    setLoot(key, "raid", nil, nil, raidIndex);
                 end)
             end
             C_Timer.After(0.2, function()
@@ -793,6 +791,9 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 NewItemPopupRaid(lsh_currentPoint, lsh_returnedX, lsh_returnedY, parent)
             end)
         end)
+        if bossIndex ~= nil then
+            bossDropdown:SetValue(bossIndex)
+        end
 
         addFrameGlobal:AddChild(bossDropdown);
 
@@ -815,6 +816,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 difficultyIndex = nil;
                 boss = nil;
                 bossIndex = nil;
+                raidIndexSelector = nil;
                 selectedItem = nil;
                 raidSaved = true;
                 loot = {};
@@ -859,6 +861,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 difficultyIndex = nil;
                 boss = nil;
                 bossIndex = nil;
+                raidIndexSelector = nil;
             end
             selectedItem = nil;
             addFrameGlobal = nil;
@@ -1221,67 +1224,67 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
         end
 
-    --UPDATE step 3: update these ilvls/ranks for the new dungeon levels.
-    local keyLevelInformation = {
-        [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
-        [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
-        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
-    }
-
-    local function GenerateTooltip(itemID, keyLevel)
-        local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
-        local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
-        local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
-        local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
-
-        if keyLevel == 21 then
-            keyLevel = 20
-        elseif keyLevel == 22 then
-            keyLevel = "Vault"
-        end
-    
-        tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
-        table.insert(tooltipData.lines, 2, {
-          type = 0,
-          leftText = PLAYER_DIFFICULTY_MYTHIC_PLUS .. " " .. keyLevel,
-          leftColor = GREEN_FONT_COLOR,
-        })
-        table.insert(tooltipData.lines, 4, {
-          type = 0,
-          leftText = ITEM_UPGRADE_TOOLTIP_FORMAT:format(upgradeLevel, upgradeMax),
-          leftColor = NORMAL_FONT_COLOR,
-        })
-        for index, line in ipairs(tooltipData.lines) do
-          if line.leftText == AUCTION_HOUSE_BUCKET_VARIATION_EQUIPMENT_TOOLTIP then
-            table.remove(tooltipData.lines, index)
-            table.remove(tooltipData.lines, index - 1)
-            break
-          end
-        end
-        local info = {
-          tooltipData = tooltipData,
+        --UPDATE step 3: update these ilvls/ranks for the new dungeon levels.
+        local keyLevelInformation = {
+            [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+            [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+            [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+            [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+            [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+            [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+            [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+            [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+            [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+            [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+            [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+            [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+            [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+            [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+            [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+            [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+            [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+            [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+            [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+            [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+            [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
         }
-        GameTooltip:ProcessInfo(info)
-        GameTooltip:Show()
-    end
+
+        local function GenerateTooltip(itemID, keyLevel)
+            local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
+            local upgradeMax = keyLevelInformation[keyLevel]["upgradeMax"];
+            local itemLevel = keyLevelInformation[keyLevel]["ilvl"];
+            local tooltipData = C_TooltipInfo.GetItemKey(itemID, itemLevel, 0)
+
+            if keyLevel == 21 then
+                keyLevel = 20
+            elseif keyLevel == 22 then
+                keyLevel = "Vault"
+            end
+        
+            tooltipData.lines[1].leftColor = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic].color
+            table.insert(tooltipData.lines, 2, {
+            type = 0,
+            leftText = PLAYER_DIFFICULTY_MYTHIC_PLUS .. " " .. keyLevel,
+            leftColor = GREEN_FONT_COLOR,
+            })
+            table.insert(tooltipData.lines, 4, {
+            type = 0,
+            leftText = ITEM_UPGRADE_TOOLTIP_FORMAT:format(upgradeLevel, upgradeMax),
+            leftColor = NORMAL_FONT_COLOR,
+            })
+            for index, line in ipairs(tooltipData.lines) do
+            if line.leftText == AUCTION_HOUSE_BUCKET_VARIATION_EQUIPMENT_TOOLTIP then
+                table.remove(tooltipData.lines, index)
+                table.remove(tooltipData.lines, index - 1)
+                break
+            end
+            end
+            local info = {
+            tooltipData = tooltipData,
+            }
+            GameTooltip:ProcessInfo(info)
+            GameTooltip:Show()
+        end
 
         dungeonTabContainer = AceGUI:Create("SimpleGroup");
         dungeonTabContainer:SetFullWidth(true);
@@ -1471,6 +1474,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
         boss = nil;
         bossIndex = nil;
         selectedItem = nil;
+        raidIndexSelector = nil;
 
         dungeon = nil;
         dungeonIndex = nil;
@@ -1769,10 +1773,6 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
                             if ( (IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems")) ) then
                                 GameTooltip_ShowCompareItem(GameTooltip)
                             end
-                            local lsh_this_raidDiff = GetDifficultyInfo(GetRaidDifficultyID())
-                            if lsh_this_raidDiff == "Looking For Raid" then
-                                lsh_this_raidDiff = "Lfr"
-                            end
                             GameTooltip:SetHyperlink(targetValue["link"])
                             end)
                         targetItem:SetCallback("OnLeave", function(widget) GameTooltip:FadeOut() end)
@@ -1852,14 +1852,18 @@ function determineDropsForLootSpecs(passedEncounterId)
     end
 
     local index = 1
-    local lsh_this_instanceId = nil
-    while true do
-        tempInstanceId = EJ_GetInstanceByIndex(index, true)
-        if not tempInstanceId then
-            break
+    if lsh_most_recent_raid_id == nil then
+        while true do
+            tempInstanceId, tempName = EJ_GetInstanceByIndex(index, true)
+            if not tempInstanceId then
+                break
+            end
+            lsh_this_instanceId = tempInstanceId;
+            lsh_most_recent_raid_id = tempInstanceId;
+            index = index + 1
         end
-        lsh_this_instanceId = tempInstanceId;
-        index = index + 1
+    else
+        lsh_this_instanceId = lsh_most_recent_raid_id
     end
     local lsh_class_id = select(3,UnitClass('player'))
     local lsh_numSpecializations = GetNumSpecializationsForClassID(lsh_class_id)
@@ -1928,6 +1932,7 @@ function determineDropsForLootSpecs(passedEncounterId)
         end
         table.remove( specTables[1], removalCounter )
     end
+
     C_Timer.After(0.2, function()
         if EncounterJournal ~= nil then
             lsh_On()
@@ -1946,15 +1951,25 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    -- if targetsName ~= nil then
-    --     print("targeted: " .. targetsName)
-    -- ends
+    if targetsName == "Van" then
+        targetsName = "Pip"
+    end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
+    
+    --amirdrassil
     if targetsName == "Pip" or targetsName == "Aerwynn" or targetsName == "Urctos" then
         targetsName = "Council of Dreams"
     elseif targetsName == "Scorchtail" then
         targetsName = "Volcoross"
+    -- aberrus
+    elseif targetsName == "Essence of Shadow" or targetsName == "Eternal Blaze" then
+        targetsName = "Shadowflame Amalgamation"
+    elseif targetsName == "Rionthus" or targetsName == "Neldris" or targetsName == "Thadrion" then
+        targetsName = "The Forgotten Experiments"
+    -- vault
+    elseif targetsName == "Kadros Icewrath" or targetsName == "Dathea Stormlash" or targetsName == "Opalfang" or targetsName == "Embar Firepath" then
+        targetsName = "The Primal Council"
     end
 
     if mostRecentBoss == targetsName then
@@ -1976,7 +1991,7 @@ function checkTarget()
         -- compareName is the name given from the loot table API
         local compareName = v["boss"]
         
-        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 189620));print(data and data.lines[1].leftText or "not cached yet")
+        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 187767));print(data and data.lines[1].leftText or "not cached yet")
         -- for UPDATE step 2, change these
         -- conditional from the LSH menu when adding an item
         -- new name from above line using npc ID instead of 123456 from wowhead
@@ -1986,6 +2001,20 @@ function checkTarget()
             compareName = "Tindral Sageswift";
         elseif (compareName == "Fyrakk the Blazing") then
             compareName = "Fyrakk";
+        elseif (compareName == "The Vigilant Steward, Zskarn") then
+            compareName = "Zskarn";
+        elseif (compareName == "Assault of the Zaqali") then
+            compareName = "Warlord Kagni";
+        elseif (compareName == "Kazzara, the Hellforged") then
+            compareName = "Kazzara, the Hellforged";
+        elseif (compareName == "The Amalgamation Chamber") then
+            compareName = "Shadowflame Amalgamation";
+        elseif (compareName == "The Forgotten Experiments") then
+            compareName = "Thadrion";
+        elseif (compareName == "Rashok, the Elder") then
+            compareName = "Rashok";
+        elseif (compareName == "Echo of Neltharion") then
+            compareName = "Neltharion";
         end
         if (v["difficulty"] == currentRaidifficulty) then
             if (compareName == targetsName) then
