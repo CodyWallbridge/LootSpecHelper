@@ -158,6 +158,7 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
         encounterLoadedStatus[bossName] = false
         table.insert(bosses, {name = bossName, id = encounterID})
         bossIndexLoop = bossIndexLoop + 1
+
     end
     table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
         index = index + 1
@@ -544,6 +545,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             if not FATED then
                 --EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
                 EJ_SelectInstance(1207) -- FATED REMOVE this once fated starts
+
             else
                 EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
             end
@@ -681,7 +683,6 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 
                     EJ_SetDifficulty(difficultyId)
                     index = 1
-
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = diff, boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
             end
@@ -1973,9 +1974,9 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    -- if targetsName == "Van" then
-    --     targetsName = "Aerwynn"
-    -- end
+    if targetsName == "Van" then
+        targetsName = "Pip"
+    end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
     
