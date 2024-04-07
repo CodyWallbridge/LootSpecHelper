@@ -677,8 +677,10 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SetLootFilter(class_id)
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     local difficultyId = diff == "Lfr" and 17 or (diff == "Normal" and 14 or (diff == "Heroic" and 15 or 16))
+
                     EJ_SetDifficulty(difficultyId)
                     index = 1
+
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = diff, boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
             end
@@ -1125,9 +1127,11 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 -- Create a label for the item
                 local targetItem = AceGUI:Create("InteractiveLabel")
                 local difficulties = {}
+
                 for _, item in ipairs(itemGroup) do
                     table.insert(difficulties, item["difficulty"])
                 end
+
                 local difficultiesStr = table.concat(difficulties, "\n")
 
                 -- Count the number of lines in difficultiesStr
@@ -1969,7 +1973,7 @@ function checkTarget()
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
     -- if targetsName == "Van" then
-    --     targetsName = "Pip"
+    --     targetsName = "Aerwynn"
     -- end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
