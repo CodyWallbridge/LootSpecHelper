@@ -1968,9 +1968,9 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    if targetsName == "Van" then
-        targetsName = "Pip"
-    end
+    -- if targetsName == "Van" then
+    --     targetsName = "Pip"
+    -- end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
     
