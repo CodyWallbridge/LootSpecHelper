@@ -124,28 +124,44 @@ end
 
 function LootSpecHelperEventFrame:CustomGetInstanceInfo()
     local latestTierIndex = EJ_GetNumTiers()
-    EJ_SelectTier(latestTierIndex)
+    EJ_SelectTier(latestTierIndex -1) -- FATED REMOVE -1
 
     local raids = {}
     local dungeons = {}
 
+    -- local index = lsh_raidIndex
+    -- while true do
+    --     local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
+    --     if not instanceID then break end
+    --     local bosses = {}
+    --     EJ_SelectInstance(instanceID)
+    --     local bossIndexLoop = 1
+    --     while true do
+    --         local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
+    --         if not bossName then break end
+    --         encounterLoadedStatus[bossName] = false
+    --         table.insert(bosses, {name = bossName, id = encounterID})
+    --         bossIndexLoop = bossIndexLoop + 1
+    --     end
+    --     table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
+    --     index = index + 1
+    -- end
+
+    --FATED REMOVE and uncomment above
     local index = lsh_raidIndex
+    local bosses = {}
+    EJ_SelectInstance(1207)
+    local bossIndexLoop = 1
     while true do
-        local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
-        if not instanceID then break end
-        local bosses = {}
-        EJ_SelectInstance(instanceID)
-        local bossIndexLoop = 1
-        while true do
-            local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
-            if not bossName then break end
-            encounterLoadedStatus[bossName] = false
-            table.insert(bosses, {name = bossName, id = encounterID})
-            bossIndexLoop = bossIndexLoop + 1
-        end
-        table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
-        index = index + 1
+        local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
+        if not bossName then break end
+        encounterLoadedStatus[bossName] = false
+        table.insert(bosses, {name = bossName, id = encounterID})
+        bossIndexLoop = bossIndexLoop + 1
+
     end
+    table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
+        index = index + 1
 
 
     index = 1
@@ -157,6 +173,7 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
         index = index + 1
     end
     return raids, dungeons
+    -- FATED REMOVE
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
@@ -452,7 +469,8 @@ function resetLSH()
             end
         end
         if inTargetedInstance == true then
-            determineDungeonDropsForLootSpecs(lsh_instanceName);
+            -- determineDungeonDropsForLootSpecs(lsh_instanceName); FATED REMOVE well dont remove, need to uncomment this and remove next line
+            print("Blizzard changed (read broke) the encounter journal for the current season. Dungeon component of LSH is not supported until Fated begins. Thank you for your patience.")
         else
             runningTargetedKey = false;
         end
@@ -525,7 +543,9 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
 
             if not FATED then
-                EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+                --EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+                EJ_SelectInstance(1207) -- FATED REMOVE this once fated starts
+
             else
                 EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
             end
@@ -660,6 +680,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                     EJ_SetLootFilter(class_id)
                     EJ_SelectEncounter(selectedItem["encounterId"])
                     local difficultyId = diff == "Lfr" and 17 or (diff == "Normal" and 14 or (diff == "Heroic" and 15 or 16))
+
                     EJ_SetDifficulty(difficultyId)
                     index = 1
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = diff, boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
@@ -1108,9 +1129,11 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 -- Create a label for the item
                 local targetItem = AceGUI:Create("InteractiveLabel")
                 local difficulties = {}
+
                 for _, item in ipairs(itemGroup) do
                     table.insert(difficulties, item["difficulty"])
                 end
+
                 local difficultiesStr = table.concat(difficulties, "\n")
 
                 -- Count the number of lines in difficultiesStr
