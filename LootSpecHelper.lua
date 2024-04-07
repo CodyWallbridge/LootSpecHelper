@@ -124,28 +124,43 @@ end
 
 function LootSpecHelperEventFrame:CustomGetInstanceInfo()
     local latestTierIndex = EJ_GetNumTiers()
-    EJ_SelectTier(latestTierIndex)
+    EJ_SelectTier(latestTierIndex -1) -- FATED REMOVE -1
 
     local raids = {}
     local dungeons = {}
 
+    -- local index = lsh_raidIndex
+    -- while true do
+    --     local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
+    --     if not instanceID then break end
+    --     local bosses = {}
+    --     EJ_SelectInstance(instanceID)
+    --     local bossIndexLoop = 1
+    --     while true do
+    --         local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
+    --         if not bossName then break end
+    --         encounterLoadedStatus[bossName] = false
+    --         table.insert(bosses, {name = bossName, id = encounterID})
+    --         bossIndexLoop = bossIndexLoop + 1
+    --     end
+    --     table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
+    --     index = index + 1
+    -- end
+
+    --FATED REMOVE and uncomment above
     local index = lsh_raidIndex
+    local bosses = {}
+    EJ_SelectInstance(1207)
+    local bossIndexLoop = 1
     while true do
-        local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
-        if not instanceID then break end
-        local bosses = {}
-        EJ_SelectInstance(instanceID)
-        local bossIndexLoop = 1
-        while true do
-            local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
-            if not bossName then break end
-            encounterLoadedStatus[bossName] = false
-            table.insert(bosses, {name = bossName, id = encounterID})
-            bossIndexLoop = bossIndexLoop + 1
-        end
-        table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
-        index = index + 1
+        local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
+        if not bossName then break end
+        encounterLoadedStatus[bossName] = false
+        table.insert(bosses, {name = bossName, id = encounterID})
+        bossIndexLoop = bossIndexLoop + 1
     end
+    table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
+        index = index + 1
 
 
     index = 1
@@ -157,6 +172,7 @@ function LootSpecHelperEventFrame:CustomGetInstanceInfo()
         index = index + 1
     end
     return raids, dungeons
+    -- FATED REMOVE
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
@@ -525,7 +541,8 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
 
             if not FATED then
-                EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+                --EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
+                EJ_SelectInstance(1207) -- FATED REMOVE this once fated starts
             else
                 EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
             end
@@ -1951,9 +1968,9 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    -- if targetsName == "Van" then
-    --     targetsName = "Pip"
-    -- end
+    if targetsName == "Van" then
+        targetsName = "Pip"
+    end
     
     -- for UPDATE step 1, change these to new council/multiboss fights
     
