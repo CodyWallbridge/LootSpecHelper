@@ -468,7 +468,8 @@ function resetLSH()
             end
         end
         if inTargetedInstance == true then
-            determineDungeonDropsForLootSpecs(lsh_instanceName);
+            -- determineDungeonDropsForLootSpecs(lsh_instanceName); FATED REMOVE well dont remove, need to uncomment this and remove next line
+            print("Blizzard changed (read broke) the encounter journal for the current season. Dungeon component of LSH is not supported until Fated begins. Thank you for your patience.")
         else
             runningTargetedKey = false;
         end
