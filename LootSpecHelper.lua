@@ -51,7 +51,32 @@ encounterLoadedStatus = {}
 
 bossesOnly = {}
 
--- UPDATE step 6: update key levels if they change
+-- UPDATE: step 6: update key levels if they change
+-- keyLevels = {
+--     "2",
+--     "3",
+--     "4",
+--     "5",
+--     "6",
+--     "7",
+--     "8",
+--     "9",
+--     "10",
+--     "11",
+--     "12",
+--     "13",
+--     "14",
+--     "15",
+--     "16",
+--     "17",
+--     "18",
+--     "19",
+--     "20+",
+--     "6/6 Hero (483)",
+--     "4/4 Myth (489)"
+-- }
+
+-- again fated is fucked
 keyLevels = {
     "2",
     "3",
@@ -62,18 +87,8 @@ keyLevels = {
     "8",
     "9",
     "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20+",
-    "6/6 Hero (483)",
-    "4/4 Vault (489)"
+    "6/6 Hero (522)",
+    "4/4 Myth (528)"
 }
 
 runningTargetedKey = false;
@@ -124,56 +139,37 @@ end
 
 function LootSpecHelperEventFrame:CustomGetInstanceInfo()
     local latestTierIndex = EJ_GetNumTiers()
-    EJ_SelectTier(latestTierIndex -1) -- FATED REMOVE -1
+    EJ_SelectTier(latestTierIndex)
 
     local raids = {}
     local dungeons = {}
 
-    -- local index = lsh_raidIndex
-    -- while true do
-    --     local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
-    --     if not instanceID then break end
-    --     local bosses = {}
-    --     EJ_SelectInstance(instanceID)
-    --     local bossIndexLoop = 1
-    --     while true do
-    --         local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
-    --         if not bossName then break end
-    --         encounterLoadedStatus[bossName] = false
-    --         table.insert(bosses, {name = bossName, id = encounterID})
-    --         bossIndexLoop = bossIndexLoop + 1
-    --     end
-    --     table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
-    --     index = index + 1
-    -- end
-
-    --FATED REMOVE and uncomment above
     local index = lsh_raidIndex
-    local bosses = {}
-    EJ_SelectInstance(1207)
-    local bossIndexLoop = 1
     while true do
-        local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
-        if not bossName then break end
-        encounterLoadedStatus[bossName] = false
-        table.insert(bosses, {name = bossName, id = encounterID})
-        bossIndexLoop = bossIndexLoop + 1
-
-    end
-    table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
+        local instanceID, name, _, _, _, _, _, isRaid = EJ_GetInstanceByIndex(index, true)
+        if not instanceID then break end
+        local bosses = {}
+        EJ_SelectInstance(instanceID)
+        local bossIndexLoop = 1
+        while true do
+            local bossName, _, encounterID = EJ_GetEncounterInfoByIndex(bossIndexLoop)
+            if not bossName then break end
+            encounterLoadedStatus[bossName] = false
+            table.insert(bosses, {name = bossName, id = encounterID})
+            bossIndexLoop = bossIndexLoop + 1
+        end
+        table.insert(raids, {instanceName = name, instanceID = instanceID, bosses = bosses})
         index = index + 1
-
+    end
 
     index = 1
     while true do
         local instanceID, name = EJ_GetInstanceByIndex(index, false)
         if not instanceID then break end
-        encounterLoadedStatus[name] = false
         table.insert(dungeons, {instanceName = name, instanceID = instanceID})
         index = index + 1
     end
     return raids, dungeons
-    -- FATED REMOVE
 end
 
 function determineDungeonDropsForLootSpecs(current_lsh_instanceName)
@@ -469,8 +465,7 @@ function resetLSH()
             end
         end
         if inTargetedInstance == true then
-            -- determineDungeonDropsForLootSpecs(lsh_instanceName); FATED REMOVE well dont remove, need to uncomment this and remove next line
-            print("Blizzard changed (read broke) the encounter journal for the current season. Dungeon component of LSH is not supported until Fated begins. Thank you for your patience.")
+            determineDungeonDropsForLootSpecs(lsh_instanceName);
         else
             runningTargetedKey = false;
         end
@@ -543,9 +538,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
 
             if not FATED then
-                --EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
-                EJ_SelectInstance(1207) -- FATED REMOVE this once fated starts
-
+                EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
             else
                 EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
             end
@@ -683,6 +676,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 
                     EJ_SetDifficulty(difficultyId)
                     index = 1
+
                     table.insert(targetedItemsRaid, {itemId = selectedItem["itemID"], name = selectedItem["name"], icon = selectedItem["icon"], difficulty = diff, boss = selectedItem["bossName"], encounterId = selectedItem["encounterId"], link = properLink})
                 end
             end
@@ -1247,29 +1241,43 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
         end
 
-        --UPDATE step 3: update these ilvls/ranks for the new dungeon levels.
+    --UPDATE: step 3: update these ilvls/ranks for the new dungeon levels.
+        -- local keyLevelInformation = {
+        --     [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+        --     [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+        --     [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+        --     [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+        --     [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+        --     [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+        --     [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+        --     [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+        --     [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+        --     [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+        --     [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+        --     [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+        --     [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+        --     [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+        --     [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+        --     [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+        --     [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+        --     [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+        --     [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+        --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+        --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+        -- }
+    -- using this for fated since levels are fucked
         local keyLevelInformation = {
-            [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
-            [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-            [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-            [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-            [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-            [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-            [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-            [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-            [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-            [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-            [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-            [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-            [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-            [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-            [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-            [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-            [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-            [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-            [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-            [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
-            [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+            [2] = {ilvl = 496, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
+            [4] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
+            [7] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
+            [9] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
+            [11] = {ilvl = 522, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +10 loot
+            [12] = {ilvl = 528, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
         }
 
         local function GenerateTooltip(itemID, keyLevel)
@@ -1622,30 +1630,44 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
         scrollContainer:AddChild(disableButton);
     end  
     
-    --UPDATE step 4: update these ilvls/ranks for the new dungeon levels (same as step 3's)
-    local keyLevelInformation = {
-        [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
-        [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
-        [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
-    }
+    --UPDATE: step 4: update these ilvls/ranks for the new dungeon levels (same as step 3's)
+    -- local keyLevelInformation = {
+    --     [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+    --     [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+    --     [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+    --     [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+    --     [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+    --     [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+    --     [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+    --     [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+    --     [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+    --     [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+    --     [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+    --     [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+    --     [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+    --     [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+    --     [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+    --     [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+    --     [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+    --     [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+    --     [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+    --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+    --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+    -- }
+        -- using this for fated since levels are fucked
+        local keyLevelInformation = {
+            [2] = {ilvl = 496, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
+            [4] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
+            [7] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
+            [9] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
+            [11] = {ilvl = 522, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +10 loot
+            [12] = {ilvl = 528, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+        }
 
     local function GenerateTooltip(itemID, keyLevel)
         local upgradeLevel = keyLevelInformation[keyLevel]["upgradeLevel"];
@@ -1974,11 +1996,11 @@ function checkTarget()
 
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
-    if targetsName == "Van" then
-        targetsName = "Pip"
-    end
+    -- if targetsName == "Van" then
+    --     targetsName = "Aerwynn"
+    -- end
     
-    -- for UPDATE step 1, change these to new council/multiboss fights
+    -- for UPDATE: step 1, change these to new council/multiboss fights
     
     --amirdrassil
     if targetsName == "Pip" or targetsName == "Aerwynn" or targetsName == "Urctos" then
@@ -2015,7 +2037,7 @@ function checkTarget()
         local compareName = v["boss"]
         
         --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 187767));print(data and data.lines[1].leftText or "not cached yet")
-        -- for UPDATE step 2, change these
+        -- for UPDATE: step 2, change these
         -- conditional from the LSH menu when adding an item
         -- new name from above line using npc ID instead of 123456 from wowhead
         if (compareName == "Nymue, Weaver of the Cycle") then
