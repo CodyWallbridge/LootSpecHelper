@@ -541,6 +541,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
                 EJ_SelectInstance(EJ_GetInstanceByIndex(2, true))
             else
                 EJ_SelectInstance(EJ_GetInstanceByIndex(instanceIndex, true))
+                local ID, NAME = EJ_GetInstanceByIndex(instanceIndex, true)
             end
             EJ_SelectEncounter(encounterIDs[key])
             EJ_SetDifficulty(addingDifficulty)
@@ -1898,15 +1899,18 @@ function determineDropsForLootSpecs(passedEncounterId)
 
     local index = 1
     if lsh_most_recent_raid_id == nil then
-        while true do
-            tempInstanceId, tempName = EJ_GetInstanceByIndex(index, true)
-            if not tempInstanceId then
-                break
-            end
-            lsh_this_instanceId = tempInstanceId;
-            lsh_most_recent_raid_id = tempInstanceId;
-            index = index + 1
-        end
+        -- while true do
+        --     tempInstanceId, tempName = EJ_GetInstanceByIndex(index, true)
+        --     if not tempInstanceId then
+        --         break
+        --     end
+        --     lsh_this_instanceId = tempInstanceId;
+        --     lsh_most_recent_raid_id = tempInstanceId;
+        --     index = index + 1
+        -- end
+        name, description, journalEncounterID, rootSectionID, link, journalInstanceID = EJ_GetEncounterInfo(passedEncounterId)
+        lsh_this_instanceId = journalInstanceID;
+        lsh_most_recent_raid_id = tempInstanceId;
     else
         lsh_this_instanceId = lsh_most_recent_raid_id
     end
@@ -1997,7 +2001,7 @@ function checkTarget()
     local targetsName = UnitName("target")
     -- for RELEASE comment out the next 3 lines
     -- if targetsName == "Van" then
-    --     targetsName = "Aerwynn"
+    --     targetsName = "Gnarlroot"
     -- end
     
     -- for UPDATE: step 1, change these to new council/multiboss fights
