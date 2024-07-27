@@ -1242,31 +1242,31 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             end
         end
 
-    --UPDATE: step 3: update these ilvls/ranks for the new dungeon levels.
-        -- local keyLevelInformation = {
-        --     [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
-        --     [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        --     [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
-        --     [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        --     [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
-        --     [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        --     [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
-        --     [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        --     [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
-        --     [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        --     [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
-        --     [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        --     [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
-        --     [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        --     [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
-        --     [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        --     [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
-        --     [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        --     [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
-        --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
-        --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
-        -- }
-    -- using this for fated since levels are fucked
+        --UPDATE: step 3: update these ilvls/ranks for the new dungeon levels.
+            -- local keyLevelInformation = {
+            --     [2] = {ilvl = 441, upgradeLevel = 1, upgradeMax = 8},
+            --     [3] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+            --     [4] = {ilvl = 444, upgradeLevel = 2, upgradeMax = 8},
+            --     [5] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+            --     [6] = {ilvl = 447, upgradeLevel = 3, upgradeMax = 8},
+            --     [7] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+            --     [8] = {ilvl = 450, upgradeLevel = 4, upgradeMax = 8},
+            --     [9] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+            --     [10] = {ilvl = 454, upgradeLevel = 1, upgradeMax = 8},
+            --     [11] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+            --     [12] = {ilvl = 457, upgradeLevel = 2, upgradeMax = 8},
+            --     [13] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+            --     [14] = {ilvl = 460, upgradeLevel = 3, upgradeMax = 8},
+            --     [15] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+            --     [16] = {ilvl = 463, upgradeLevel = 4, upgradeMax = 8},
+            --     [17] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+            --     [18] = {ilvl = 467, upgradeLevel = 1, upgradeMax = 6},
+            --     [19] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+            --     [20] = {ilvl = 470, upgradeLevel = 2, upgradeMax = 6},
+            --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
+            --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+            -- }
+        -- using this for fated since levels are fucked
         local keyLevelInformation = {
             [2] = {ilvl = 496, upgradeLevel = 2, upgradeMax = 8},
             [3] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
