@@ -51,7 +51,7 @@ encounterLoadedStatus = {}
 
 bossesOnly = {}
 
--- UPDATE: step 6: update key levels if they change
+-- UPDATE: step 5: update key levels if they change
 -- keyLevels = {
 --     "2",
 --     "3",
@@ -87,8 +87,8 @@ keyLevels = {
     "8",
     "9",
     "10",
-    "6/6 Hero (522)",
-    "4/4 Myth (528)"
+    "6/6 Hero (665)",
+    "6/6 Myth (678)"
 }
 
 runningTargetedKey = false;
@@ -712,11 +712,11 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
 
         if FATED then
             local raidDropdown = AceGUI:Create("Dropdown")
-        -- -- UPDATE: step 7: update these raid names for fated
+        -- -- UPDATE: step 6: update these raid names for fated
         -- -- if FATED is true, make a dropdown for the current expansions raids
             local raidNames = {
-                "Vault of the Incarnates",
-                "Aberrus, the Shadowed Crucible",
+                "Nerub-ar Palace",
+                "Liberation of Undermine",
                 "Amirdrassil, the Dream's Hope"
             }
             raidDropdown:SetList(raidNames)
@@ -1266,19 +1266,19 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
             --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
             -- }
-        -- using this for fated since levels are fucked
+        -- using this since 10's drop max loot. if it reverts to 20 dropping max, go back to above chart.
         local keyLevelInformation = {
-            [2] = {ilvl = 496, upgradeLevel = 2, upgradeMax = 8},
-            [3] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
-            [4] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
-            [5] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
-            [6] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
-            [7] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
-            [8] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
-            [9] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
-            [10] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
-            [11] = {ilvl = 522, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +10 loot
-            [12] = {ilvl = 528, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+            [2] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
+            [4] = {ilvl = 642, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 645, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
+            [7] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
+            [9] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 655, upgradeLevel = 3, upgradeMax = 6},
+            [11] = {ilvl = 662, upgradeLevel = 1, upgradeMax = 6}, -- max rank from +10 loot
+            [12] = {ilvl = 678, upgradeLevel = 6, upgradeMax = 6} -- max rank for max vault loot
         }
 
         local function GenerateTooltip(itemID, keyLevel)
@@ -1655,19 +1655,19 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
     --     [21] = {ilvl = 483, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +20 loot
     --     [22] = {ilvl = 489, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
     -- }
-        -- using this for fated since levels are fucked
+        -- using this since 10's drop max loot. if it reverts to 20 dropping max, go back to above chart.
         local keyLevelInformation = {
-            [2] = {ilvl = 496, upgradeLevel = 2, upgradeMax = 8},
-            [3] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
-            [4] = {ilvl = 499, upgradeLevel = 3, upgradeMax = 8},
-            [5] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
-            [6] = {ilvl = 502, upgradeLevel = 4, upgradeMax = 8},
-            [7] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
-            [8] = {ilvl = 506, upgradeLevel = 1, upgradeMax = 6},
-            [9] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
-            [10] = {ilvl = 509, upgradeLevel = 2, upgradeMax = 6},
-            [11] = {ilvl = 522, upgradeLevel = 6, upgradeMax = 6}, -- max rank from +10 loot
-            [12] = {ilvl = 528, upgradeLevel = 4, upgradeMax = 4} -- max rank for max vault loot
+            [2] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
+            [4] = {ilvl = 642, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 645, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
+            [7] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
+            [9] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 655, upgradeLevel = 3, upgradeMax = 6},
+            [11] = {ilvl = 662, upgradeLevel = 1, upgradeMax = 6}, -- max rank from +10 loot
+            [12] = {ilvl = 678, upgradeLevel = 6, upgradeMax = 6} -- max rank for max vault loot
         }
 
     local function GenerateTooltip(itemID, keyLevel)
@@ -2006,19 +2006,22 @@ function checkTarget()
     
     -- for UPDATE: step 1, change these to new council/multiboss fights
     
-    --amirdrassil
-    if targetsName == "Pip" or targetsName == "Aerwynn" or targetsName == "Urctos" then
-        targetsName = "Council of Dreams"
-    elseif targetsName == "Scorchtail" then
-        targetsName = "Volcoross"
-    -- aberrus
-    elseif targetsName == "Essence of Shadow" or targetsName == "Eternal Blaze" then
-        targetsName = "Shadowflame Amalgamation"
-    elseif targetsName == "Rionthus" or targetsName == "Neldris" or targetsName == "Thadrion" then
-        targetsName = "The Forgotten Experiments"
-    -- vault
-    elseif targetsName == "Kadros Icewrath" or targetsName == "Dathea Stormlash" or targetsName == "Opalfang" or targetsName == "Embar Firepath" then
-        targetsName = "The Primal Council"
+    if targetsName == "Flarendo" or targetsName == "Torq" then
+        targetsName = "Cauldron of Carnage"
+    -- elseif targetsName == "Vexie Fullthrottle" then
+    --     targetsName = "Vexie and the Geargrinders"
+    -- elseif targetsName == "Rik Reverb" then
+    --     targetsName = "Rik Reverb"
+    -- elseif targetsName == "Stix Bunkjunker" then
+    --     targetsName = "Stix Bunkjunker"
+    -- elseif targetsName == "Sprocketmonger Lockenstock" then
+    --     targetsName = "Sprocketmonger Lockenstock"
+    -- elseif targetsName == "One-Armed Bandit" then
+    --     targetsName = "One-Armed Bandit"
+    -- elseif targetsName == "Mug'Zee" then
+    --     targetsName = "Mug'Zee, Heads of Security"
+    -- elseif targetsName == "Chrome King Gallywix" then
+    --     targetsName = "Chrome King Gallywix"
     end
 
     if mostRecentBoss == targetsName then
@@ -2040,31 +2043,31 @@ function checkTarget()
         -- compareName is the name given from the loot table API
         local compareName = v["boss"]
         
-        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 187767));print(data and data.lines[1].leftText or "not cached yet")
+        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 239651));print(data and data.lines[1].leftText or "not cached yet")
         -- for UPDATE: step 2, change these
         -- conditional from the LSH menu when adding an item
         -- new name from above line using npc ID instead of 123456 from wowhead
-        if (compareName == "Nymue, Weaver of the Cycle") then
-            compareName = "Nymue";
-        elseif (compareName == "Tindral Sageswift, Seer of the Flame") then
-            compareName = "Tindral Sageswift";
-        elseif (compareName == "Fyrakk the Blazing") then
-            compareName = "Fyrakk";
-        elseif (compareName == "The Vigilant Steward, Zskarn") then
-            compareName = "Zskarn";
-        elseif (compareName == "Assault of the Zaqali") then
-            compareName = "Warlord Kagni";
-        elseif (compareName == "Kazzara, the Hellforged") then
-            compareName = "Kazzara, the Hellforged";
-        elseif (compareName == "The Amalgamation Chamber") then
-            compareName = "Shadowflame Amalgamation";
-        elseif (compareName == "The Forgotten Experiments") then
-            compareName = "Thadrion";
-        elseif (compareName == "Rashok, the Elder") then
-            compareName = "Rashok";
-        elseif (compareName == "Echo of Neltharion") then
-            compareName = "Neltharion";
-        end
+        -- if (compareName == "Nymue, Weaver of the Cycle") then
+        --     compareName = "Nymue";
+        -- elseif (compareName == "Tindral Sageswift, Seer of the Flame") then
+        --     compareName = "Tindral Sageswift";
+        -- elseif (compareName == "Fyrakk the Blazing") then
+        --     compareName = "Fyrakk";
+        -- elseif (compareName == "The Vigilant Steward, Zskarn") then
+        --     compareName = "Zskarn";
+        -- elseif (compareName == "Assault of the Zaqali") then
+        --     compareName = "Warlord Kagni";
+        -- elseif (compareName == "Kazzara, the Hellforged") then
+        --     compareName = "Kazzara, the Hellforged";
+        -- elseif (compareName == "The Amalgamation Chamber") then
+        --     compareName = "Shadowflame Amalgamation";
+        -- elseif (compareName == "The Forgotten Experiments") then
+        --     compareName = "Thadrion";
+        -- elseif (compareName == "Rashok, the Elder") then
+        --     compareName = "Rashok";
+        -- elseif (compareName == "Echo of Neltharion") then
+        --     compareName = "Neltharion";
+        -- end
         if (v["difficulty"] == currentRaidifficulty) then
             if (compareName == targetsName) then
                 needFromBoss = true;
