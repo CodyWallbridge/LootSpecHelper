@@ -4,6 +4,9 @@
 ## Version: 3.2.1
 ## SavedVariablesPerCharacter: targetedItemsRaid, targetedItemsDungeon
 ## IconTexture: Interface\AddOns\LootSpecHelper\Media\Icons\lshIcon.jpeg
+## X-Curse-Project-ID: 905331
+## X-WoWI-ID: 26623
+## X-Wago-ID: ZKxqOkGk
 
 libs\LibStub\LibStub.lua
 libs\AceGUI-3.0\AceGUI-3.0.xml
