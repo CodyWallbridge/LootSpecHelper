@@ -87,8 +87,8 @@ keyLevels = {
     "8",
     "9",
     "10",
-    "6/6 Hero (665)",
-    "6/6 Myth (678)"
+    "1/6 Myth (707)",
+    "6/6 Myth (723)"
 }
 
 runningTargetedKey = false;
@@ -395,6 +395,7 @@ function checkLoadedItem(loadedItemId)
         else
             print("level was different. " )
             print(dungeonLevel)
+            levelsBonusId = ""
         end
 
         local itemId = id .. ":"
@@ -717,7 +718,7 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             local raidNames = {
                 "Nerub-ar Palace",
                 "Liberation of Undermine",
-                "Amirdrassil, the Dream's Hope"
+                "Manaforge Omega"
             }
             raidDropdown:SetList(raidNames)
             raidDropdown:SetText("Raid")
@@ -1268,17 +1269,17 @@ function LootSpecHelperEventFrame:CreateLootSpecHelperWindow()
             -- }
         -- using this since 10's drop max loot. if it reverts to 20 dropping max, go back to above chart.
         local keyLevelInformation = {
-            [2] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
-            [3] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
-            [4] = {ilvl = 642, upgradeLevel = 3, upgradeMax = 8},
-            [5] = {ilvl = 645, upgradeLevel = 4, upgradeMax = 8},
-            [6] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
-            [7] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
-            [8] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
-            [9] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
-            [10] = {ilvl = 655, upgradeLevel = 3, upgradeMax = 6},
-            [11] = {ilvl = 662, upgradeLevel = 1, upgradeMax = 6}, -- max rank from +10 loot
-            [12] = {ilvl = 678, upgradeLevel = 6, upgradeMax = 6} -- max rank for max vault loot
+            [2] = {ilvl = 684, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 684, upgradeLevel = 2, upgradeMax = 8},
+            [4] = {ilvl = 688, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 691, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 694, upgradeLevel = 1, upgradeMax = 6},
+            [7] = {ilvl = 694, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 697, upgradeLevel = 2, upgradeMax = 6},
+            [9] = {ilvl = 697, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 701, upgradeLevel = 3, upgradeMax = 6},
+            [11] = {ilvl = 707, upgradeLevel = 1, upgradeMax = 6}, -- +10 vault
+            [12] = {ilvl = 723, upgradeLevel = 6, upgradeMax = 6} -- max rank for +10 vault loot
         }
 
         local function GenerateTooltip(itemID, keyLevel)
@@ -1657,17 +1658,17 @@ function displaySpecLoot(specTables, sharedTable, passedInstanceType)
     -- }
         -- using this since 10's drop max loot. if it reverts to 20 dropping max, go back to above chart.
         local keyLevelInformation = {
-            [2] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
-            [3] = {ilvl = 639, upgradeLevel = 2, upgradeMax = 8},
-            [4] = {ilvl = 642, upgradeLevel = 3, upgradeMax = 8},
-            [5] = {ilvl = 645, upgradeLevel = 4, upgradeMax = 8},
-            [6] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
-            [7] = {ilvl = 649, upgradeLevel = 1, upgradeMax = 6},
-            [8] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
-            [9] = {ilvl = 652, upgradeLevel = 2, upgradeMax = 6},
-            [10] = {ilvl = 655, upgradeLevel = 3, upgradeMax = 6},
-            [11] = {ilvl = 662, upgradeLevel = 1, upgradeMax = 6}, -- max rank from +10 loot
-            [12] = {ilvl = 678, upgradeLevel = 6, upgradeMax = 6} -- max rank for max vault loot
+            [2] = {ilvl = 684, upgradeLevel = 2, upgradeMax = 8},
+            [3] = {ilvl = 684, upgradeLevel = 2, upgradeMax = 8},
+            [4] = {ilvl = 688, upgradeLevel = 3, upgradeMax = 8},
+            [5] = {ilvl = 691, upgradeLevel = 4, upgradeMax = 8},
+            [6] = {ilvl = 694, upgradeLevel = 1, upgradeMax = 6},
+            [7] = {ilvl = 694, upgradeLevel = 1, upgradeMax = 6},
+            [8] = {ilvl = 697, upgradeLevel = 2, upgradeMax = 6},
+            [9] = {ilvl = 697, upgradeLevel = 2, upgradeMax = 6},
+            [10] = {ilvl = 701, upgradeLevel = 3, upgradeMax = 6},
+            [11] = {ilvl = 707, upgradeLevel = 1, upgradeMax = 6}, -- +10 vault
+            [12] = {ilvl = 723, upgradeLevel = 6, upgradeMax = 6} -- max rank for +10 vault loot
         }
 
     local function GenerateTooltip(itemID, keyLevel)
@@ -2006,8 +2007,8 @@ function checkTarget()
     
     -- for UPDATE: step 1, change these to new council/multiboss fights
     
-    if targetsName == "Flarendo" or targetsName == "Torq" then
-        targetsName = "Cauldron of Carnage"
+    if targetsName == "Velaryn Bloodwrath" or targetsName == "Adarus Duskblaze" or targetsName == "Ilyssa Darksorrow" then
+        targetsName = "The Soul Hunters"
     -- elseif targetsName == "Vexie Fullthrottle" then
     --     targetsName = "Vexie and the Geargrinders"
     -- elseif targetsName == "Rik Reverb" then
@@ -2031,7 +2032,7 @@ function checkTarget()
     if globalSpecLootsFrame ~= nil then
         globalSpecLootsFrame:Release()
     end
-    currentRaidifficulty = GetDifficultyInfo(GetRaidDifficultyID())
+    local currentRaidifficulty = GetDifficultyInfo(GetRaidDifficultyID())
     if currentRaidifficulty == "Looking For Raid" then
         currentRaidifficulty = "Lfr"
     end
@@ -2039,11 +2040,11 @@ function checkTarget()
     local needFromBoss = false;
     local targetEncounterId = nil;
 
-    for k,v in pairs(targetedItemsRaid) do
+    for _,v in pairs(targetedItemsRaid) do
         -- compareName is the name given from the loot table API
         local compareName = v["boss"]
         
-        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 239651));print(data and data.lines[1].leftText or "not cached yet")
+        --/run local data=C_TooltipInfo.GetHyperlink(format("unit:Creature-0-0-0-0-%d-0", 237661));print(data and data.lines[1].leftText or "not cached yet")
         -- for UPDATE: step 2, change these
         -- conditional from the LSH menu when adding an item
         -- new name from above line using npc ID instead of 123456 from wowhead
